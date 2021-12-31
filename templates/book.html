@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"> 
+	<title>register</title>
+	<link rel="stylesheet" href="/static/css/bootstrap.min.css">  
+	<script src="/static/js/jquery/jquery.min.js"></script>
+	<script src="/static/js/bootstrap.min.js"></script>
+</head>
+<style>
+    p{color: red; line-height: 50px;}
+</style>
+<body>
+    <div class="container">
+        <div class="row clearfix">
+            <div class="col-md-12 column">
+                <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+                    <div class="navbar-header">
+                         <button style="font-size: larger;" type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Management</a>
+                    </div>
+                    <ul class="nav navbar-nav">
+						<li>
+							 <a href="/management/user">User</a>
+						</li>
+						<li class="active">
+							 <a href="/management/book">Book</a>
+						</li>
+                        <li>
+                            <a href="/management/system">System</a>
+                        </li>
+                    </ul>
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav navbar-right">
+                            <li>
+                                 <a style="margin-right: 100px;" href="/logout">Logout</a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <h3 style="margin-top: 80px;" class="text-center">
+                    Books
+                </h3>
+                <table style="margin-top: 15px;" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>
+                                ID
+                            </th>
+                            <th>
+                                Bookname
+                            </th>
+                            <th>
+                                Time
+                            </th>
+                            <th>
+                                Admin
+                            </th>
+                            <th>
+                                Edit
+                            </th>
+                            <th>
+                                Delete
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                1
+                            </td>
+                            <td>
+                                heyi01
+                            </td>
+                            <td>
+                                2021-12-28 14:32:47
+                            </td>
+                            <td>
+                                True
+                            </td>
+                            <td>
+                                <a href="#">edit</a>
+                            </td>
+                            <td>
+                                <a href="#">delete</a>
+                            </td>
+                        </tr>
+                        <tr class="success">
+                            <td>
+                                1
+                            </td>
+                            <td>
+                                TB - Monthly
+                            </td>
+                            <td>
+                                01/04/2012
+                            </td>
+                            <td>
+                                Approved
+                            </td>
+                            <td>
+                                <a href="#">edit</a>
+                            </td>
+                            <td>
+                                <a href="#">delete</a>
+                            </td>
+                        </tr>
+                        <tr class="error">
+                            <td>
+                                2
+                            </td>
+                            <td>
+                                TB - Monthly
+                            </td>
+                            <td>
+                                02/04/2012
+                            </td>
+                            <td>
+                                Declined
+                            </td>
+                            <td>
+                                <a href="#">edit</a>
+                            </td>
+                            <td>
+                                <a href="#">delete</a>
+                            </td>
+                        </tr>
+                        <tr class="warning">
+                            <td>
+                                3
+                            </td>
+                            <td>
+                                TB - Monthly
+                            </td>
+                            <td>
+                                03/04/2012
+                            </td>
+                            <td>
+                                Pending
+                            </td>
+                            <td>
+                                <a href="#">edit</a>
+                            </td>
+                            <td>
+                                <a href="#">delete</a>
+                            </td>
+                        </tr>
+                        <tr class="info">
+                            <td>
+                                4
+                            </td>
+                            <td>
+                                TB - Monthly
+                            </td>
+                            <td>
+                                04/04/2012
+                            </td>
+                            <td>
+                                Call in to confirm
+                            </td>
+                            <td>
+                                <a href="#">edit</a>
+                            </td>
+                            <td>
+                                <a href="#">delete</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body> 
+</html>
+
+
