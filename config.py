@@ -4,7 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class DataBaseConfig(object):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI =   "sqlite:///"+os.path.join(basedir +"\\database\\", "database123.db")
+    SQLALCHEMY_DATABASE_URI =   "sqlite:///"+os.path.join(basedir +"/database/", "database123.db")
 
 class EmailConfig(object):
     MAIL_SERVER = 'smtp.qq.com'
