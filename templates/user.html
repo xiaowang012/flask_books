@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset="utf-8"> 
-	<title>register</title>
+	<title>Management</title>
 	<link rel="stylesheet" href="/static/css/bootstrap.min.css">  
 	<script src="/static/js/jquery/jquery.min.js"></script>
 	<script src="/static/js/bootstrap.min.js"></script>
@@ -32,15 +32,44 @@
                     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                         <ul class="nav navbar-nav navbar-right">
                             <li>
-                                 <a style="margin-right: 100px;" href="/logout">Logout</a>
+                                <a style="margin-right: 100px;" href="/home">Go Back</a>
                             </li>
                         </ul>
                     </div>
                 </nav>
                 <h3 style="margin-top: 80px;" class="text-center">
-                    User Table
+                    User Management Page
                 </h3>
-                <table style="margin-top: 15px;" class="table table-bordered">
+                <a id="modal-207274" href="#modal-container-207274" role="button" class="btn btn-default" style="float:right;font-size: smaller;" data-toggle="modal">Add Users</a>
+                <div class="modal fade" id="modal-container-207274" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                                <h4 class="modal-title" id="myModalLabel">
+                                    Add Users
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <form role="form">
+                                    <!-- {% form.csrf_token %} -->
+                                    <div class="form-group">
+                                            <label for="exampleInputFile">File input</label><input type="file" id="exampleInputFile" />
+                                        <p class="help-block">
+                                            The template download link is as follows:
+                                            <a href="/management/user/addusers/download">Click to download</a>
+                                        </p>
+                                    </div>
+                                    <button type="submit" class="btn btn-default btn-primary">Submit</button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                    <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div> 
+                    </div>
+                </div>
+                <table style="margin-top: 20px;" class="table table-bordered">
                     <thead>
                         <tr>
                             <th>
@@ -50,13 +79,10 @@
                                 Username
                             </th>
                             <th>
-                                Time
+                                Registration time
                             </th>
                             <th>
-                                Admin
-                            </th>
-                            <th>
-                                Edit
+                                User group
                             </th>
                             <th>
                                 Delete
@@ -64,112 +90,69 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                heyi01
-                            </td>
-                            <td>
-                                2021-12-28 14:32:47
-                            </td>
-                            <td>
-                                True
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="success">
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                01/04/2012
-                            </td>
-                            <td>
-                                Approved
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="error">
-                            <td>
-                                2
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                02/04/2012
-                            </td>
-                            <td>
-                                Declined
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="warning">
-                            <td>
-                                3
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                03/04/2012
-                            </td>
-                            <td>
-                                Pending
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="info">
-                            <td>
-                                4
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                04/04/2012
-                            </td>
-                            <td>
-                                Call in to confirm
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
+                        {% for item in user_list %}
+                            <tr class="{{ item['style'] }}">
+                                <td>
+                                    {{ item['id'] }}
+                                </td>
+                                <td>
+                                    {{ item['username'] }}
+                                </td>
+                                <td>
+                                    {{ item['add_time'] }}
+                                </td>
+                                <td>
+                                    {{ item['group'] }} <a style="margin-left: 20px;" href="/management/user/changegroup/{{ item['username'] }}/{{ item['group'] }}">change user group</a>
+                                </td>
+                                <td>
+                                    <a href="/management/user/delete/{{ item['username'] }}">delete</a>
+                                </td>
+                            </tr>  
+                        {% endfor %}
                     </tbody>
                 </table>
+                <div class="row clearfix">
+                    <div class="col-md-2 column">
+                    </div>
+                    <div class="col-md-6 column">
+                    </div>
+                    <div class="col-md-4 column">
+                        <ul class="pagination">
+                            <li class="{{ dic1['active_Prev'] }}">
+                                {% if dic1['current_page_number'] <=2  %}
+                                    <a href="/management/user/page/1">Prev</a>
+                                {% else %}
+                                    <a href="/management/user/page/{{ dic1['current_page_number']-1 }}">Prev</a>
+                                {% endif %}
+                               </li>
+                            <li class="{{ dic1['active1'] }}">
+                                 <a href="/management/user/page/1">1</a>
+                            </li>
+                            <li class="{{ dic1['active2'] }}">
+                                 <a href="/management/user/page/2">2</a>
+                            </li>
+                            <li class="{{ dic1['active3'] }}">
+                                 <a href="/management/user/page/3">3</a>
+                            </li>
+                            <li class="{{ dic1['active4'] }}">
+                                 <a href="/management/user/page/4">4</a>
+                            </li>
+                            <li class="{{ dic1['active5'] }}">
+                                 <a href="/management/user/page/5">5</a>
+                            </li>
+                            <li class="{{ dic1['active_next'] }}">
+                                 <a href="/management/user/page/{{ dic1['current_page_number']+1 }}">Next</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </body> 
 </html>
+
+
+
 
 
