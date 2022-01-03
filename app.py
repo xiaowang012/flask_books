@@ -175,38 +175,7 @@ def home_page(number):
                 style_value = random.choice(style_list)
                 dict_data['style'] = style_value   
         return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
-    # elif request.method =='POST':
-    #     if number == 1:
-    #         return redirect('home')
-    #     username = session.get('user_id')
-    #     dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
-    #     if 1<=number<=5:
-    #         dic1['active'+str(number)] = 'active'
-    #     elif number>5:
-    #         dic1['active_next'] = 'active'
-    #     # else:
-    #     #     dic1['active_Prev'] = 'active'
-    #     #根据传入的页码查询第几条到第几条.offset(10).limit(10).all()
-    #     offset_num = (int(number)-1)*5
-    #     limit_num = 5
-    #     book_info = Books.query.offset(offset_num).limit(limit_num).all()
-    #     if len(book_info) ==0:
-    #         book_info_list=[]
-    #     else:
-    #         #print(book_info)
-    #         book_info_list = []
-    #         for i in book_info:
-    #             book_info_list.append(i.__dict__)
-    #         for j in book_info_list:
-    #             del j['_sa_instance_state']
-    #             del j['add_book_time']
-    #             del j['book_file_name']
-    #         style_list = ['success','info','warning','error','']
-    #         for dict_data in book_info_list:
-    #             style_value = random.choice(style_list)
-    #             dict_data['style'] = style_value   
-    #     return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
-
+    
 #home页面的查询翻页
 @app.route("/home/search/<int:number>",methods = ['POST','GET'])
 @login_required
@@ -298,7 +267,7 @@ def search_books(number):
 #按类型查询表格翻页
 @app.route("/home/search/type/<type_1>/<int:number>",methods = ['POST','GET'])
 @login_required
-# @routing_permission_check
+@routing_permission_check
 def search_by_type(type_1,number):  
     form = SearchIdForms()
     type_1 = str(type_1)
@@ -328,11 +297,7 @@ def search_by_type(type_1,number):
             style_value = random.choice(style_list)
             dict_data['style'] = style_value  
     return render_template('home_search_type.html',form = form,dic1 = dic1,list1 = book_info_list)
-    
-    
-    
-
-        
+          
 # #管理
 @app.route('/addStudents',methods = ['POST','GET'])
 @login_required
@@ -479,37 +444,37 @@ def uploadUser():
     elif request.method == 'GET':
         return render_template('uploadUser.html',form = form)
        
-# #查询
-@app.route('/home',methods = ['POST','GET'])
-@login_required
-def home2():
-    form2 = SearchIdForms()
-    if request.method == 'GET':
-        return render_template('home.html',form = form2)
-    elif request.method == 'POST':
-        if form2.validate_on_submit():
-            searchId = request.form['searchId']
-            if str.isdigit(searchId):
-                data = studentsInfo.query.filter_by(id = searchId).all()
-                #print(type(data))
-                if len(data) == 1: 
-                    dic2 = data[0].__dict__
-                    return render_template('data.html',dic = dic2)
-                else:
-                    dic1 = {'title':'fail','message':'查询错误！'}
-                    return render_template('info.html',dic1 = dic1)
-            else:
-                data = studentsInfo.query.filter_by(name = searchId).first()
+# # #查询
+# @app.route('/home',methods = ['POST','GET'])
+# @login_required
+# def home2():
+#     form2 = SearchIdForms()
+#     if request.method == 'GET':
+#         return render_template('home.html',form = form2)
+#     elif request.method == 'POST':
+#         if form2.validate_on_submit():
+#             searchId = request.form['searchId']
+#             if str.isdigit(searchId):
+#                 data = studentsInfo.query.filter_by(id = searchId).all()
+#                 #print(type(data))
+#                 if len(data) == 1: 
+#                     dic2 = data[0].__dict__
+#                     return render_template('data.html',dic = dic2)
+#                 else:
+#                     dic1 = {'title':'fail','message':'查询错误！'}
+#                     return render_template('info.html',dic1 = dic1)
+#             else:
+#                 data = studentsInfo.query.filter_by(name = searchId).first()
                 
-                if data:
-                    dic2 = data.__dict__
-                    return render_template('data.html',dic = dic2)
-                else:
-                    #未查询到数据，报错
-                    dic1 = {'title':'fail','message':'查询错误！'}
-                    return render_template('info.html',dic1 = dic1)       
-        else:
-            return render_template('home.html',form = form2)
+#                 if data:
+#                     dic2 = data.__dict__
+#                     return render_template('data.html',dic = dic2)
+#                 else:
+#                     #未查询到数据，报错
+#                     dic1 = {'title':'fail','message':'查询错误！'}
+#                     return render_template('info.html',dic1 = dic1)       
+#         else:
+#             return render_template('home.html',form = form2)
 
 #管理页面
 @app.route('/management',methods = ['POST','GET'])
@@ -522,8 +487,127 @@ def management():
 @app.route("/management/user",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def user_page():
-    return render_template('user.html')
+def user_mgr():
+    if request.method == 'GET':
+        #查询用户数据
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+        #根据参数查询用户数据，一次10条
+        user_info = User.query.limit(10).all()
+        user_list = []
+        if len(user_info) ==0:
+            user_list = []
+        else:
+            for userdata in user_info:
+                user_list.append( userdata.__dict__)
+            k = 0
+            style_list = ['success','info','warning','error','']
+            for j in user_list:
+                k+=1
+                #删除多余的字段
+                del j['_sa_instance_state']
+                del j['hash_pwd']
+                del j['salt']
+                #增加一个id字段
+                j['id'] = k
+                #根据group id 改写数据为不同的角色组
+                if j['group_id'] ==1:
+                    del j['group_id']
+                    j['group'] = 'admin'
+                elif j['group_id'] == 2:
+                    del j['group_id']
+                    j['group'] = 'others'
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('user.html',user_list = user_list,dic1 = dic1)
+
+#管理界面用户管理翻页
+@app.route("/management/user/page/<int:number>",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def user_page(number):
+    if request.method == 'GET':
+        #查询用户数据
+        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+        if 1<=number<=5:
+            dic1['active'+str(number)] = 'active'
+        elif number>5:
+            dic1['active_next'] = 'active'
+        # else:
+        #     dic1['active_Prev'] = 'active'
+        #根据参数查询用户数据，一次10条
+        offset_num = (int(number)-1)*10
+        limit_num = 10
+        user_info = User.query.offset(offset_num).limit(limit_num).all()
+        #user_info = User.query.limit(10).all()
+        user_list = []
+        if len(user_info) ==0:
+            user_list = []
+        else:
+            for userdata in user_info:
+                user_list.append( userdata.__dict__)
+            k = 0
+            style_list = ['success','info','warning','error','']
+            for j in user_list:
+                k+=1
+                #删除多余的字段
+                del j['_sa_instance_state']
+                del j['hash_pwd']
+                del j['salt']
+                #增加一个id字段
+                j['id'] = k
+                #根据group id 改写数据为不同的角色组
+                if j['group_id'] ==1:
+                    del j['group_id']
+                    j['group'] = 'admin'
+                elif j['group_id'] == 2:
+                    del j['group_id']
+                    j['group'] = 'others'
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('user.html',user_list = user_list,dic1 = dic1)
+
+#管理界面用户管理 ：修改用户组(admin切换成others，others切换成admin)
+@app.route("/management/user/changegroup/<username>/<group>/",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def change_group(username,group):
+    if group == 'admin':
+        #修改为others
+        user_data = User.query.filter(User.username == username).first()
+        if user_data:
+            user_data.group_id = 2
+            db.session.commit()
+            return redirect('/management/user')
+        else:
+            return 'no data'
+    elif group == 'others':
+        user_data = User.query.filter(User.username == username).first()
+        if user_data:
+            user_data.group_id = 1
+            db.session.commit()
+            return redirect('/management/user')
+        else:
+            return 'no data'
+
+#管理界面用户管理 ：删除指定用户
+@app.route("/management/user/delete/<username>",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def delete_user(username):
+    user_data = User.query.filter(User.username == username).first()
+    if user_data:
+        db.session.delete(user_data)
+        db.session.commit()
+        return redirect('/management/user')
+    else:
+        return 'no data'
+
+#批量注册用户数据
+# @app.route("management/user/addusers",methods = ['POST','GET'])
+# @login_required
+# @routing_permission_check
+# def add_users():
+#     pass
 
 #管理界面书本管理
 @app.route("/management/book",methods = ['POST','GET'])
@@ -542,12 +626,14 @@ def system_page():
 #书本下载
 @app.route("/book/download/<int:id>",methods = ['POST','GET'])
 @login_required
-#@routing_permission_check  
+@routing_permission_check  
 def download_book(id):
     #在window和linux上自动拼接为windows的 '\\' 或者linux的'/' 
     book_info = Books.query.filter(Books.id == int(id)).first()
     if book_info:
         file_name = str(book_info.book_file_name )
+        #读取下载次数+1
+        number1 = int(book_info.number_of_downloads)+1
         book_dir = os.getcwd() + os.path.join(os.sep,'media',file_name )
         #打开指定文件准备传输
         #循环读取文件
@@ -559,10 +645,13 @@ def download_book(id):
                         break
                     yield data
         response = Response(sendfile(book_dir), content_type='application/octet-stream')
-        response.headers["Content-disposition"] = 'attachment; filename=%s' % file_name   
+        response.headers["Content-disposition"] = 'attachment; filename=%s' % file_name 
+        #更新下载次数
+        book_info.number_of_downloads = number1
+        db.session.commit()
         return response
     else:  
         return jsonify({'code':404,'message':'Unable to find resources'})
         
 if __name__ == '__main__':
-    app.run(host = '0.0.0.0',port=5000,debug = True)
+    app.run(host = '127.0.0.1',port=5000,debug = True)
