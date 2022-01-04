@@ -23,7 +23,7 @@ class Books(db.Model):
         self.add_book_time = add_book_time
         self.number_of_downloads = number_of_downloads
         
-
+#用户表
 class User(db.Model):
     username = db.Column(db.String(50),primary_key = True)
     hash_pwd = db.Column(db.String(100))
@@ -38,6 +38,7 @@ class User(db.Model):
         self.group_id =group_id
         self.add_time = add_time
 
+#权限表
 class Permission(db.Model):
     id = db.Column(db.Integer,autoincrement=True,primary_key = True)
     name = db.Column(db.String(50))
@@ -47,6 +48,7 @@ class Permission(db.Model):
         self.name = name
         self.url = url
         
+#用户组表      
 class UserGroup(db.Model):
     id = db.Column(db.Integer(),autoincrement=True,primary_key = True)
     name = db.Column(db.String(50))
@@ -54,11 +56,4 @@ class UserGroup(db.Model):
     def __init__(self,id,name):
         self.id = id
         self.name = name
-
-
-
-# /home
-# /management/user
-# /management/book
-# /management/system
 
