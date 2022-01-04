@@ -1,6 +1,7 @@
 #coding=utf-8
 from flask import Flask,render_template,request,url_for,redirect,session,Response,g
 from flask.json import jsonify
+from flask_wtf import file
 from forms import UserForms,StudentsInfoForms,SearchIdForms,RegisterForms,UploadFileForms
 from werkzeug.utils import  secure_filename
 from config import DataBaseConfig,Config
@@ -488,6 +489,7 @@ def management():
 @login_required
 @routing_permission_check
 def user_mgr():
+    form = UploadFileForms()
     if request.method == 'GET':
         #查询用户数据
         dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
@@ -518,13 +520,14 @@ def user_mgr():
                     j['group'] = 'others'
                 #为表格加随机样式
                 j['style'] = random.choice(style_list)
-        return render_template('user.html',user_list = user_list,dic1 = dic1)
+        return render_template('user.html',user_list = user_list,dic1 = dic1,form = form)
 
 #管理界面用户管理翻页
 @app.route("/management/user/page/<int:number>",methods = ['POST','GET'])
 @login_required
-@routing_permission_check
+#@routing_permission_check
 def user_page(number):
+    form = UploadFileForms()
     if request.method == 'GET':
         #查询用户数据
         dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
@@ -564,7 +567,7 @@ def user_page(number):
                     j['group'] = 'others'
                 #为表格加随机样式
                 j['style'] = random.choice(style_list)
-        return render_template('user.html',user_list = user_list,dic1 = dic1)
+        return render_template('user.html',user_list = user_list,dic1 = dic1,form = form)
 
 #管理界面用户管理 ：修改用户组(admin切换成others，others切换成admin)
 @app.route("/management/user/changegroup/<username>/<group>/",methods = ['POST','GET'])
@@ -603,11 +606,204 @@ def delete_user(username):
         return 'no data'
 
 #批量注册用户数据
-# @app.route("management/user/addusers",methods = ['POST','GET'])
-# @login_required
-# @routing_permission_check
-# def add_users():
-#     pass
+@app.route("/management/user/addusers",methods = ['POST','GET'])
+@login_required
+#@routing_permission_check
+def add_users():
+    form = UploadFileForms()
+    if request.method == 'GET':
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+            #根据参数查询用户数据，一次10条
+        user_info = User.query.limit(10).all()
+        user_list = []
+        if len(user_info) ==0:
+            user_list = []
+        else:
+            for userdata in user_info:
+                user_list.append( userdata.__dict__)
+            k = 0
+            style_list = ['success','info','warning','error','']
+            for j in user_list:
+                k+=1
+                #删除多余的字段
+                del j['_sa_instance_state']
+                del j['hash_pwd']
+                del j['salt']
+                #增加一个id字段
+                j['id'] = k
+                #根据group id 改写数据为不同的角色组
+                if j['group_id'] ==1:
+                    del j['group_id']
+                    j['group'] = 'admin'
+                elif j['group_id'] == 2:
+                    del j['group_id']
+                    j['group'] = 'others'
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('user.html',form = form,user_list = user_list,dic1 = dic1)
+    elif request.method =='POST':
+        if form.validate_on_submit():
+            #通过表单验证
+            f = request.files['file']
+            file_name = str(time.time())+f.filename
+            file_path = os.getcwd() + os.path.join(os.sep,'media',file_name).replace(file_name,'')
+            f.save(file_path + secure_filename(file_name))
+            #打开文件
+            if '.xlsx'  in file_name or '.xls' in file_name :
+                table_head = ['用户名','密码','用户组ID']
+                work_book = xlrd.open_workbook(file_path + file_name)
+                ws = work_book.sheet_by_name('Sheet1')
+                msg_list = []
+                if ws.row_values(0) == table_head:
+                    for row in range(1,ws.nrows):
+                        user1 = ws.cell_value(row,0)
+                        pass1 = ws.cell_value(row,1)
+                        group_id = ws.cell_value(row,2)
+                        ctype =ws.cell(row,1).ctype
+                        ctype = ws.cell(row,2).ctype
+                        if ctype == 2:
+                            pass1 = str(pass1).replace('.0','')
+                        if ctype == 2:
+                            group_id = int(str(group_id).replace('.0',''))
+                        #print(user1,pass1,str(group_id))
+                        if not User.query.filter(User.username == user1).first():
+                            #用户名查重
+                            try:
+                                salt = str(time.time())
+                                username = str(user1)
+                                hash_pwd = get_hash_value(str(pass1),salt)
+                                group_id = group_id
+                                add_time = time.strftime('%Y-%m-%d %H:%M:%S')
+                                db.session.add(User(username,hash_pwd,salt,group_id,add_time))
+                                db.session.commit()
+                                msg = 'user: ' +user1 +' import successful  '
+                                msg_list.append(msg)
+                            except:
+                                db.session.rollback()
+                                msg = 'user: ' +user1 +' import error!  '
+                                msg_list.append(msg)
+                        else:
+                            msg = 'user: ' +user1 +' existing, failed to import!  '
+                            msg_list.append(msg)
+                    msgs = ''
+                    for msg_info in msg_list:
+                        msgs +=msg_info
+                    if msgs == '':
+                        message = 'EXCEL no data!'
+                        style = 'alert alert-dismissable alert-danger'
+                        title = 'Warning!  '
+                    else:
+                        message = msgs
+                        style = 'alert alert-success alert-dismissable'
+                        title = 'SUCCESS! '
+                else:
+                    message = 'File format error!'
+                    style = 'alert alert-dismissable alert-danger'
+                    title = 'Warning! '
+            else:
+                message = 'File type error!'
+                style = 'alert alert-dismissable alert-danger'
+                title = 'Warning! '
+            #删除excel文件
+            if os.path.isfile(file_path + file_name) ==True:
+                os.remove(file_path + file_name)
+            #返回对应的错误信息渲染页面
+            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+            dic1['message'] = message
+            dic1['style'] = style
+            dic1['title'] = title
+            #根据参数查询用户数据，一次10条
+            user_info = User.query.limit(10).all()
+            user_list = []
+            if len(user_info) ==0:
+                user_list = []
+            else:
+                for userdata in user_info:
+                    user_list.append( userdata.__dict__)
+                k = 0
+                style_list = ['success','info','warning','error','']
+                for j in user_list:
+                    k+=1
+                    #删除多余的字段
+                    del j['_sa_instance_state']
+                    del j['hash_pwd']
+                    del j['salt']
+                    #增加一个id字段
+                    j['id'] = k
+                    #根据group id 改写数据为不同的角色组
+                    if j['group_id'] ==1:
+                        del j['group_id']
+                        j['group'] = 'admin'
+                    elif j['group_id'] == 2:
+                        del j['group_id']
+                        j['group'] = 'others'
+                    #为表格加随机样式
+                    j['style'] = random.choice(style_list)
+            return render_template('user.html',form = form,user_list = user_list,dic1 = dic1)
+
+        else:
+            #未通过表单校验！
+            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+            #未通过表单校验将报错信息传入dic1
+            if form.errors:
+                message = ''
+                for key,value in form.errors.items():
+                    message = value
+                dic1['message'] = str(message[0])
+                dic1['style'] = 'alert alert-dismissable alert-danger'
+                dic1['title'] = 'Warning!  '
+            #根据参数查询用户数据，一次10条
+            user_info = User.query.limit(10).all()
+            user_list = []
+            if len(user_info) ==0:
+                user_list = []
+            else:
+                for userdata in user_info:
+                    user_list.append( userdata.__dict__)
+                k = 0
+                style_list = ['success','info','warning','error','']
+                for j in user_list:
+                    k+=1
+                    #删除多余的字段
+                    del j['_sa_instance_state']
+                    del j['hash_pwd']
+                    del j['salt']
+                    #增加一个id字段
+                    j['id'] = k
+                    #根据group id 改写数据为不同的角色组
+                    if j['group_id'] ==1:
+                        del j['group_id']
+                        j['group'] = 'admin'
+                    elif j['group_id'] == 2:
+                        del j['group_id']
+                        j['group'] = 'others'
+                    #为表格加随机样式
+                    j['style'] = random.choice(style_list)
+            return render_template('user.html',form = form,user_list = user_list,dic1 = dic1)
+                
+
+#批量注册用户数据下载excel模板
+@app.route("/management/user/addusers/download",methods = ['POST','GET'])
+@login_required
+#@routing_permission_check
+def download_upload_user_template():
+    file_name = 'template.zip'
+    file_path = os.getcwd() + os.path.join(os.sep,'media',file_name )
+    if os.path.isfile(file_path) == True:
+        #打开指定文件准备传输
+        #循环读取文件
+        def sendfile(file_path):
+            with open(file_path, 'rb') as targetfile:
+                while True:
+                    data = targetfile.read(20*1024*1024)
+                    if not data:
+                        break
+                    yield data
+        response = Response(sendfile(file_path), content_type='application/octet-stream')
+        response.headers["Content-disposition"] = 'attachment; filename=%s' % file_name 
+        return response
+    else:  
+        return jsonify({'code':404,'message':'Unable to find resources'})
 
 #管理界面书本管理
 @app.route("/management/book",methods = ['POST','GET'])
