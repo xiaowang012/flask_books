@@ -1,9 +1,7 @@
 #coding=utf-8
-from flask import Flask,render_template,request,url_for,redirect,session,Response,g
-from flask.json import jsonify
-from flask_wtf import file
+from flask import Flask,render_template,request,url_for,redirect,session,Response,g,jsonify
 from forms import UserForms,StudentsInfoForms,SearchIdForms,RegisterForms,UploadFileForms
-from werkzeug.utils import  secure_filename
+from werkzeug.utils import secure_filename
 from config import DataBaseConfig,Config
 from models import User,Books
 from decorator import login_required,routing_permission_check,get_hash_value
@@ -19,7 +17,7 @@ app = Flask(__name__)
 app.config.from_object(DataBaseConfig)
 app.config.from_object(Config)
 db.init_app(app)
-#自定义一个全局变量
+#自定义一个全局变量,用于解决翻页问题
 BOOK_NAME = []
 BOOK_TYPE = []
 
@@ -77,6 +75,8 @@ def register():
 #用户登录
 @app.route('/login',methods = ['POST','GET'])
 def login():
+    if 'user_id' in session:
+       return redirect('home')
     form = UserForms()
     if request.method == 'GET':
         return render_template('login.html',form = form)
@@ -84,13 +84,11 @@ def login():
         if form.validate_on_submit():
             user=request.form['username']
             passw=request.form['password'] 
-            res = User.query.filter_by(username = user).first()
-            #print(res.__dict__)
+            res = User.query.filter(User.username == user).first()
             if res:
-                dict_user = res.__dict__
-                #验证密码的哈希值
-                new_pwd = get_hash_value(passw,dict_user['salt'])
-                if new_pwd == dict_user['hash_pwd']:
+                #验证登录密码的哈希值是否和数据库中的密码哈希值相等
+                new_pwd = get_hash_value(passw,res.salt)
+                if new_pwd == res.hash_pwd:
                     #验证通过
                     session['user_id'] = user
                     #return 'Login OK!'
@@ -300,183 +298,151 @@ def search_by_type(type_1,number):
     return render_template('home_search_type.html',form = form,dic1 = dic1,list1 = book_info_list)
           
 # #管理
-@app.route('/addStudents',methods = ['POST','GET'])
-@login_required
-@routing_permission_check
-def addStudents():
-    form = StudentsInfoForms()
-    if request.method == 'GET':
-        return render_template('addStudents.html',form = form)
-    elif request.method == 'POST':
-        if form.validate_on_submit():
-            #写入数据库
-            #id name sex date nation height	idCard PhoneNumber address teacher hobbies
-            try:
-                id = request.form['id']
-                name = request.form['name']
-                sex = request.form['sex']
-                date = request.form['date']
-                nation = request.form['nation']
-                height = request.form['height']
-                idCard = request.form['idCard']
-                PhoneNumber = request.form['PhoneNumber']
-                address = request.form['address']
-                teacher = request.form['teacher']
-                hobbies = request.form['hobbies']
-                db.session.add(studentsInfo(id ,name, sex, date, nation, height,idCard, PhoneNumber, address, teacher, hobbies))
-                db.session.commit()
-                dic1 = {'title':'success','message':'导入成功!'}
-                return render_template('info.html',dic1 = dic1)
-            except:
-                db.session.rollback()
-                dic1 = {'title':'error','message':'导入失败!'}
-                return render_template('info.html',dic1 = dic1)
-            finally:
-                db.session.close()
-        else:
-            return render_template('addStudents.html',form = form)
+# @app.route('/addStudents',methods = ['POST','GET'])
+# @login_required
+# @routing_permission_check
+# def addStudents():
+#     form = StudentsInfoForms()
+#     if request.method == 'GET':
+#         return render_template('addStudents.html',form = form)
+#     elif request.method == 'POST':
+#         if form.validate_on_submit():
+#             #写入数据库
+#             #id name sex date nation height	idCard PhoneNumber address teacher hobbies
+#             try:
+#                 id = request.form['id']
+#                 name = request.form['name']
+#                 sex = request.form['sex']
+#                 date = request.form['date']
+#                 nation = request.form['nation']
+#                 height = request.form['height']
+#                 idCard = request.form['idCard']
+#                 PhoneNumber = request.form['PhoneNumber']
+#                 address = request.form['address']
+#                 teacher = request.form['teacher']
+#                 hobbies = request.form['hobbies']
+#                 db.session.add(studentsInfo(id ,name, sex, date, nation, height,idCard, PhoneNumber, address, teacher, hobbies))
+#                 db.session.commit()
+#                 dic1 = {'title':'success','message':'导入成功!'}
+#                 return render_template('info.html',dic1 = dic1)
+#             except:
+#                 db.session.rollback()
+#                 dic1 = {'title':'error','message':'导入失败!'}
+#                 return render_template('info.html',dic1 = dic1)
+#             finally:
+#                 db.session.close()
+#         else:
+#             return render_template('addStudents.html',form = form)
 
 # #批量导入学生信息
-@app.route('/upload',methods = ['POST','GET'])
-@login_required
-@routing_permission_check
-def upload():
-    form = UploadFileForms()
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            #通过表单验证
-            f = request.files['file']
-            file_extension = str(f.filename).split('.')[1]
-            file_name = str(time.time()).replace('.','') + '.' + file_extension
-            f.save(os.getcwd()+'\\Temp\\'+secure_filename(file_name))
-            #打开文件
-            if '.xlsx'  in file_name or '.xls' in file_name :
-                table_head = ['学号','姓名','性别','出生年月','民族','身高','身份证号码','家长电话','家庭住址','班主任','兴趣爱好']
-                work_book = xlrd.open_workbook(os.getcwd()+'\\Temp\\'+file_name)
-                work_sheet = work_book.sheet_by_name('Sheet1')
-                data_list = []
-                if work_sheet.row_values(0) == table_head:
-                    try:
-                        for i in range(1,work_sheet.nrows):
-                            excelData = work_sheet.row_values(i)
-                            id,name,sex,date,nation,height,idCard,PhoneNumber,address,teacher,hobbies = excelData
-                            data_list.append(studentsInfo(id,name,sex,date,nation,height,idCard,PhoneNumber,address,teacher,hobbies))
-                        db.session.add_all( data_list)
-                        db.session. commit()
-                    except:
-                        db.session.rollback()
-                        dic1 = {'title':'SQLerror','message':'导入SQL失败!'}
-                        return render_template('info.html',dic1 = dic1)
-                        
-                    else:
-                        dic1 = {'title':'success','message':'导入SQL成功!'}
-                        return render_template('info.html',dic1 = dic1)
-                    finally:
-                        db.session.close()
-                        #xlrd 1.2 版本的workbook 没有close方法
-                        work_book.release_resources()
-                        #os.remove(os.getcwd()+'\\Temp\\'+file_name)
-                else:
-                    dic1 = {'title':'error','message':'excel文件数据错误，请检查excel文件!'}
-                    return render_template('info.html',dic1 = dic1)
-            else:
-                dic1 = {'title':'error','message':'excel文件传输错误!'}
-                return render_template('info.html',dic1 = dic1)
-                
-        else:
-            return render_template('upload.html',form = form)
-    elif request.method == 'GET':
-        return render_template('upload.html',form = form)
-
-# #批量导入用户
-@app.route('/uploadUser',methods = ['POST','GET'])
-@login_required
-@routing_permission_check
-def uploadUser():
-    form = UploadFileForms()
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            #通过表单验证
-            f = request.files['file']
-            file_extension = str(f.filename).split('.')[1]
-            file_name = str(time.time()).replace('.','') + '.' + file_extension
-            f.save(os.getcwd()+'\\Temp\\'+secure_filename(file_name))
-            #打开文件
-            if '.xlsx'  in file_name or '.xls' in file_name :
-                table_head = ['用户名','密码']
-                work_book = xlrd.open_workbook(os.getcwd()+'\\Temp\\'+file_name)
-                work_sheet = work_book.sheet_by_name('Sheet1')
-                data_list = []
-                if work_sheet.row_values(0) == table_head:
-                    try:
-                        for i in range(1,work_sheet.nrows):
-                            time.sleep(0.001)
-                            excelData = work_sheet.row_values(i)
-                            username,password = excelData
-                            time_salt = time.time()
-                            salt = str(time_salt)
-                            hash_pwd = get_hash_value(password,salt + '@@')
-                            data_list.append(userInfo(username = str(username),hash_pwd= hash_pwd,salt = salt))
-                            #data_list.append((username,hash_pwd,salt))
-                        
-                        db.session.add_all(data_list)
-                        db.session.commit()
-                    except:
-                        db.session.rollback()
-                        dic1 = {'title':'SQLerror','message':'导入SQL失败！'}
-                        return render_template('info.html',dic1 = dic1)
-                        
-                    else:
-                        dic1 = {'title':'success','message':'导入SQL成功！'}
-                        return render_template('info.html',dic1 = dic1)
-                    finally:
-                        db.session.close()
-                        #xlrd 1.2 版本的workbook 没有close方法
-                        work_book.release_resources()
-                        #os.remove(os.getcwd()+'\\Temp\\'+file_name)
-                else:
-                    dic1 = {'title':'error','message':'excel文件数据错误，请检查excel文件！'}
-                    return render_template('info.html',dic1 = dic1)
-            else:
-                dic1 = {'title':'error','message':'excel文件传输错误！'}
-                return render_template('info.html',dic1 = dic1)
-        else:
-            return render_template('uploadUser.html',form = form)
-    elif request.method == 'GET':
-        return render_template('uploadUser.html',form = form)
-       
-# # #查询
-# @app.route('/home',methods = ['POST','GET'])
+# @app.route('/upload',methods = ['POST','GET'])
 # @login_required
-# def home2():
-#     form2 = SearchIdForms()
-#     if request.method == 'GET':
-#         return render_template('home.html',form = form2)
-#     elif request.method == 'POST':
-#         if form2.validate_on_submit():
-#             searchId = request.form['searchId']
-#             if str.isdigit(searchId):
-#                 data = studentsInfo.query.filter_by(id = searchId).all()
-#                 #print(type(data))
-#                 if len(data) == 1: 
-#                     dic2 = data[0].__dict__
-#                     return render_template('data.html',dic = dic2)
+# @routing_permission_check
+# def upload():
+#     form = UploadFileForms()
+#     if request.method == 'POST':
+#         if form.validate_on_submit():
+#             #通过表单验证
+#             f = request.files['file']
+#             file_extension = str(f.filename).split('.')[1]
+#             file_name = str(time.time()).replace('.','') + '.' + file_extension
+#             f.save(os.getcwd()+'\\Temp\\'+secure_filename(file_name))
+#             #打开文件
+#             if '.xlsx'  in file_name or '.xls' in file_name :
+#                 table_head = ['学号','姓名','性别','出生年月','民族','身高','身份证号码','家长电话','家庭住址','班主任','兴趣爱好']
+#                 work_book = xlrd.open_workbook(os.getcwd()+'\\Temp\\'+file_name)
+#                 work_sheet = work_book.sheet_by_name('Sheet1')
+#                 data_list = []
+#                 if work_sheet.row_values(0) == table_head:
+#                     try:
+#                         for i in range(1,work_sheet.nrows):
+#                             excelData = work_sheet.row_values(i)
+#                             id,name,sex,date,nation,height,idCard,PhoneNumber,address,teacher,hobbies = excelData
+#                             data_list.append(studentsInfo(id,name,sex,date,nation,height,idCard,PhoneNumber,address,teacher,hobbies))
+#                         db.session.add_all( data_list)
+#                         db.session. commit()
+#                     except:
+#                         db.session.rollback()
+#                         dic1 = {'title':'SQLerror','message':'导入SQL失败!'}
+#                         return render_template('info.html',dic1 = dic1)
+                        
+#                     else:
+#                         dic1 = {'title':'success','message':'导入SQL成功!'}
+#                         return render_template('info.html',dic1 = dic1)
+#                     finally:
+#                         db.session.close()
+#                         #xlrd 1.2 版本的workbook 没有close方法
+#                         work_book.release_resources()
+#                         #os.remove(os.getcwd()+'\\Temp\\'+file_name)
 #                 else:
-#                     dic1 = {'title':'fail','message':'查询错误！'}
+#                     dic1 = {'title':'error','message':'excel文件数据错误，请检查excel文件!'}
 #                     return render_template('info.html',dic1 = dic1)
 #             else:
-#                 data = studentsInfo.query.filter_by(name = searchId).first()
+#                 dic1 = {'title':'error','message':'excel文件传输错误!'}
+#                 return render_template('info.html',dic1 = dic1)
                 
-#                 if data:
-#                     dic2 = data.__dict__
-#                     return render_template('data.html',dic = dic2)
-#                 else:
-#                     #未查询到数据，报错
-#                     dic1 = {'title':'fail','message':'查询错误！'}
-#                     return render_template('info.html',dic1 = dic1)       
 #         else:
-#             return render_template('home.html',form = form2)
+#             return render_template('upload.html',form = form)
+#     elif request.method == 'GET':
+#         return render_template('upload.html',form = form)
 
+# # #批量导入用户
+# @app.route('/uploadUser',methods = ['POST','GET'])
+# @login_required
+# @routing_permission_check
+# def uploadUser():
+    # form = UploadFileForms()
+    # if request.method == 'POST':
+    #     if form.validate_on_submit():
+    #         #通过表单验证
+    #         f = request.files['file']
+    #         file_extension = str(f.filename).split('.')[1]
+    #         file_name = str(time.time()).replace('.','') + '.' + file_extension
+    #         f.save(os.getcwd()+'\\Temp\\'+secure_filename(file_name))
+    #         #打开文件
+    #         if '.xlsx'  in file_name or '.xls' in file_name :
+    #             table_head = ['用户名','密码']
+    #             work_book = xlrd.open_workbook(os.getcwd()+'\\Temp\\'+file_name)
+    #             work_sheet = work_book.sheet_by_name('Sheet1')
+    #             data_list = []
+    #             if work_sheet.row_values(0) == table_head:
+    #                 try:
+    #                     for i in range(1,work_sheet.nrows):
+    #                         time.sleep(0.001)
+    #                         excelData = work_sheet.row_values(i)
+    #                         username,password = excelData
+    #                         time_salt = time.time()
+    #                         salt = str(time_salt)
+    #                         hash_pwd = get_hash_value(password,salt + '@@')
+    #                         data_list.append(userInfo(username = str(username),hash_pwd= hash_pwd,salt = salt))
+    #                         #data_list.append((username,hash_pwd,salt))
+                        
+    #                     db.session.add_all(data_list)
+    #                     db.session.commit()
+    #                 except:
+    #                     db.session.rollback()
+    #                     dic1 = {'title':'SQLerror','message':'导入SQL失败！'}
+    #                     return render_template('info.html',dic1 = dic1)
+                        
+    #                 else:
+    #                     dic1 = {'title':'success','message':'导入SQL成功！'}
+    #                     return render_template('info.html',dic1 = dic1)
+    #                 finally:
+    #                     db.session.close()
+    #                     #xlrd 1.2 版本的workbook 没有close方法
+    #                     work_book.release_resources()
+    #                     #os.remove(os.getcwd()+'\\Temp\\'+file_name)
+    #             else:
+    #                 dic1 = {'title':'error','message':'excel文件数据错误，请检查excel文件！'}
+    #                 return render_template('info.html',dic1 = dic1)
+    #         else:
+    #             dic1 = {'title':'error','message':'excel文件传输错误！'}
+    #             return render_template('info.html',dic1 = dic1)
+    #     else:
+    #         return render_template('uploadUser.html',form = form)
+    # elif request.method == 'GET':
+    #     return render_template('uploadUser.html',form = form)
+       
 #管理页面
 @app.route('/management',methods = ['POST','GET'])
 @login_required
@@ -525,7 +491,7 @@ def user_mgr():
 #管理界面用户管理翻页
 @app.route("/management/user/page/<int:number>",methods = ['POST','GET'])
 @login_required
-#@routing_permission_check
+@routing_permission_check
 def user_page(number):
     form = UploadFileForms()
     if request.method == 'GET':
@@ -608,7 +574,7 @@ def delete_user(username):
 #批量注册用户数据
 @app.route("/management/user/addusers",methods = ['POST','GET'])
 @login_required
-#@routing_permission_check
+@routing_permission_check
 def add_users():
     form = UploadFileForms()
     if request.method == 'GET':
@@ -781,11 +747,10 @@ def add_users():
                     j['style'] = random.choice(style_list)
             return render_template('user.html',form = form,user_list = user_list,dic1 = dic1)
                 
-
-#批量注册用户数据下载excel模板
+#批量注册用户下载excel模板
 @app.route("/management/user/addusers/download",methods = ['POST','GET'])
 @login_required
-#@routing_permission_check
+@routing_permission_check
 def download_upload_user_template():
     file_name = 'template.zip'
     file_path = os.getcwd() + os.path.join(os.sep,'media',file_name )
@@ -804,13 +769,6 @@ def download_upload_user_template():
         return response
     else:  
         return jsonify({'code':404,'message':'Unable to find resources'})
-
-#管理界面书本管理
-@app.route("/management/book",methods = ['POST','GET'])
-@login_required
-@routing_permission_check
-def book_page():
-    return render_template('book.html')
 
 #管理界面系统权限管理
 @app.route("/management/system",methods = ['POST','GET'])
@@ -848,6 +806,13 @@ def download_book(id):
         return response
     else:  
         return jsonify({'code':404,'message':'Unable to find resources'})
-        
+
+#管理界面书本管理
+@app.route("/management/book",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def book_page():
+    return render_template('book.html')
+
 if __name__ == '__main__':
-    app.run(host = '0.0.0.0',port=5000,debug = True)
+    app.run(host = '127.0.0.1',port=5000,debug = True)
