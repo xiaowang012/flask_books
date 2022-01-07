@@ -3,8 +3,8 @@ from flask import Flask,render_template,request,url_for,redirect,session,Respons
 from forms import UserForms,StudentsInfoForms,SearchIdForms,RegisterForms,UploadFileForms
 from werkzeug.utils import secure_filename
 from config import DataBaseConfig,Config
-from models import User,Books
-from decorator import login_required,routing_permission_check,get_hash_value
+from models import User,Books,Permission
+from decorator import login_required, routing_permission_check,get_hash_value,PERMISSION_DICT
 import os
 import xlrd
 import time
@@ -108,6 +108,7 @@ def login():
 def logout():
     if 'user_id' in session:
         session.pop('user_id')
+
     return redirect('login')
 
 #用户主页
