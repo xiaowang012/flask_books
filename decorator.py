@@ -28,15 +28,16 @@ def routing_permission_check(func):
     def wrapper(*args,**kwargs):
         '''
         校验权限的过程:
-        1.user表通过获取session user_id(heyi01) 查询group_id 
-        2.user_group表通过group_id  查询角色名name
-        3.permission 表，通过name 查询所有的url 生成list
-        4.获取当前访问的路由的url去掉最后的? ,判断list是否包含url
+        1.获取当前登录的用户user_id,获取当前的url(current_url,使用request.path获取  127.0.0.1:5000/test?x=1  获取的为:/test)
+        2.根据user_id查询group_id
+        3.根据group_id查询角色admin/others
+        4.在全局变量中PERMISSION_DITC去除对应角色的权限url(集合)
+        5.判断当前url是否包含在对应的权限url(集合)中
         '''
         #获取用户名
         user_id = session.get('user_id')
         #获取当前访问的url
-        current_url = str(request.full_path).rstrip('?')
+        current_url = str(request.path)
 
         #判断权限字典是否为空
         if PERMISSION_DICT:
@@ -73,7 +74,7 @@ def routing_permission_check(func):
                         return jsonify({'code':403,'message':'Unauthorized access'})
             else:
                 return jsonify({'code':403,'message':'Unauthorized access'})
-            # print(PERMISSION_DICT)
+            #print(PERMISSION_DICT)
             result = User.query.filter(User.username == user_id).first()
             if result:
                 group_id = result.group_id
@@ -88,29 +89,6 @@ def routing_permission_check(func):
                     return jsonify({'code':403,'message':'Unauthorized access'})
             else:
                 return jsonify({'code':403,'message':'Unauthorized access'})
-
-        # result = User.query.filter(User.username == user_id).first()
-        # if result:
-        #     group_id = result.group_id
-        #     result1 = UserGroup.query.filter(UserGroup.id == group_id).first()
-        #     if result1:
-        #         name = result1.name
-        #         result2 = Permission.query.filter(Permission.name == name).all()
-        #         url_list = []
-
-        #         if len(result2) != 0:
-        #             for per in result2:
-        #                 url_list.append(per.url)
-        #             if current_url in url_list:
-        #                 return func(*args,**kwargs)
-        #             else:
-        #                 return jsonify({'code':403,'message':'Unauthorized access'})
-        #         else:
-        #             return jsonify({'code':403,'message':'Unauthorized access'})
-        #     else:
-        #         return jsonify({'code':403,'message':'Unauthorized access'})
-        # else:
-        #     return jsonify({'code':403,'message':'Unauthorized access'})
     return wrapper
 
 #hash加密
