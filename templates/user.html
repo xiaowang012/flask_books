@@ -44,7 +44,7 @@
                     <div class="row clearfix">
                         <div style="padding-left:0" class="col-md-12 column">
                             <div style="margin-right: 15px;" class="{{ dic1['style'] }}">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">X</button>
+                                
                                 <h4>
                                     {{ dic1['title'] }}
                                 </h4> <strong>{{ dic1['title'] }}</strong>{{ dic1['message'] }}
@@ -52,12 +52,13 @@
                         </div>
                     </div>
                 </div>  
-                <a id="modal-207274" href="#modal-container-207274" role="button" class="btn btn-default" style="float:right;font-size: smaller;" data-toggle="modal">Add Users</a>
+                <a id="modal-207274" href="/management/refresh?cur_url=/management/user" role="button" class="btn btn-default btn-primary" style="float:right;font-size: smaller;" data-toggle="modal">Refresh</a>
+                <a id="modal-207274" href="#modal-container-207274" role="button" class="btn btn-default" style="float:right;font-size: smaller;" data-toggle="modal">AddUser</a>
                 <div class="modal fade" id="modal-container-207274" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">X</button>
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
                                 <h4 class="modal-title" id="myModalLabel">
                                     Add Users
                                 </h4>
@@ -113,10 +114,10 @@
                                     {{ item['add_time'] }}
                                 </td>
                                 <td>
-                                    {{ item['group'] }} <a style="margin-left: 20px;" href="/management/user/changegroup/{{ item['username'] }}/{{ item['group'] }}">change user group</a>
+                                    {{ item['group'] }} <a style="margin-left: 20px;" href="/management/user/changegroup?username={{ item['username'] }}&group={{ item['group'] }}">change user group</a>
                                 </td>
                                 <td>
-                                    <a href="/management/user/delete/{{ item['username'] }}">delete</a>
+                                    <a href="/management/user/delete?username={{ item['username'] }}">delete</a>
                                 </td>
                             </tr>  
                         {% endfor %}
@@ -131,28 +132,28 @@
                         <ul class="pagination">
                             <li class="{{ dic1['active_Prev'] }}">
                                 {% if dic1['current_page_number'] <=2  %}
-                                    <a href="/management/user/page/1">Prev</a>
+                                    <a href="/management/user/page?number=1">Prev</a>
                                 {% else %}
-                                    <a href="/management/user/page/{{ dic1['current_page_number']-1 }}">Prev</a>
+                                    <a href="/management/user/page?number={{ dic1['current_page_number']-1 }}">Prev</a>
                                 {% endif %}
                                </li>
                             <li class="{{ dic1['active1'] }}">
-                                 <a href="/management/user/page/1">1</a>
+                                 <a href="/management/user/page?number=1">1</a>
                             </li>
                             <li class="{{ dic1['active2'] }}">
-                                 <a href="/management/user/page/2">2</a>
+                                 <a href="/management/user/page?number=2">2</a>
                             </li>
                             <li class="{{ dic1['active3'] }}">
-                                 <a href="/management/user/page/3">3</a>
+                                 <a href="/management/user/page?number=3">3</a>
                             </li>
                             <li class="{{ dic1['active4'] }}">
-                                 <a href="/management/user/page/4">4</a>
+                                 <a href="/management/user/page?number=4">4</a>
                             </li>
                             <li class="{{ dic1['active5'] }}">
-                                 <a href="/management/user/page/5">5</a>
+                                 <a href="/management/user/page?number=5">5</a>
                             </li>
                             <li class="{{ dic1['active_next'] }}">
-                                 <a href="/management/user/page/{{ dic1['current_page_number']+1 }}">Next</a>
+                                 <a href="/management/user/page?number={{ dic1['current_page_number']+1 }}">Next</a>
                             </li>
                         </ul>
                     </div>
