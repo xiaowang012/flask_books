@@ -1,5 +1,4 @@
 #coding=utf-8
-from flask_sqlalchemy import _include_sqlalchemy
 from dbs import db
 
 #定义数据表和字段
