@@ -34,37 +34,37 @@
 								 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Type<strong class="caret"></strong></a>
 								<ul class="dropdown-menu">
 									<li>
-										 <a href="/home/search/type/Python/1">Python</a>    
+										 <a href="/home/search/type?type_1=Python&number=1">Python</a>    
 									</li>
 									<li class="divider">
 									</li>
 									<li>
-										 <a href="/home/search/type/C/1">C</a>
+										 <a href="/home/search/type?type_1=C&number=1"">C</a>
 									</li>
 									<li class="divider">
 									</li>
 									<li>
-										 <a href="/home/search/type/C++/1">C++</a>
+										 <a href="/home/search/type?type_1=C++&number=1"">C++</a>
 									</li>
 									<li class="divider">
 									</li>
 									<li>
-										 <a href="/home/search/type/Java/1">java</a>
+										 <a href="/home/search/type?type_1=Java&number=1"">java</a>
 									</li>
 									<li class="divider">
 									</li>
 									<li>
-										 <a href="/home/search/type/Javascript/1">javascript</a>
+										 <a href="/home/search/type?type_1=Javascript&number=1">javascript</a>
 									</li>
 									<li class="divider">
 									</li>
 									<li>
-										<a href="/home/search/type/Linux/1">Linux</a>
+										<a href="/home/search/type?type_1=Linux&number=1"">Linux</a>
 								   	</li>
 								</ul>
 							</li>
 						</ul>
-						<form class="navbar-form navbar-left" role="search" action="/home/search/1" method="post" >
+						<form class="navbar-form navbar-left" role="search" action="/home/search/page?number=1" method="post" >
 							{{ form.csrf_token }}
 							<div class="form-group">
 								<input type="text" class="form-control" name = "book_name" />
@@ -120,7 +120,7 @@
 									{{ item['number_of_downloads'] }}
 								</td>
 								<td>
-									<a href="/book/download/{{ item['id'] }}">download</a>
+									<a href="/book/download?code={{ item['id'] }}">download</a>
 								</td>
 							</tr>  
 						{% endfor %}
@@ -137,28 +137,28 @@
 				<ul class="pagination">
 					<li class="{{ dic1['active_Prev'] }}">
 						{% if dic1['current_page_number'] <=2  %}
-							<a href="/home/search/1">Prev</a>
+							<a href="/home/search/page?number=1">Prev</a>
 						{% else %}
-							<a href="/home/search/{{ dic1['current_page_number']-1 }}">Prev</a>
+							<a href="/home/search/page?number={{ dic1['current_page_number']-1 }}">Prev</a>
 						{% endif %}
 				   	</li>
 					<li class="{{ dic1['active1'] }}">
-						 <a href="/home/search/1">1</a>
+						 <a href="/home/search/page?number=1">1</a>
 					</li>
 					<li class="{{ dic1['active2'] }}">
-						 <a href="/home/search/2">2</a>
+						 <a href="/home/search/page?number=2">2</a>
 					</li>
 					<li class="{{ dic1['active3'] }}">
-						 <a href="/home/search/3">3</a>
+						 <a href="/home/search/page?number=3">3</a>
 					</li>
 					<li class="{{ dic1['active4'] }}">
-						 <a href="/home/search/4">4</a>
+						 <a href="/home/search/page?number=4">4</a>
 					</li>
 					<li class="{{ dic1['active5'] }}">
-						 <a href="/home/search/5">5</a>
+						 <a href="/home/search/page?number=5">5</a>
 					</li>
 					<li class="{{ dic1['active_next'] }}">
-						 <a href="/home/search/{{ dic1['current_page_number']+1 }}">Next</a>
+						 <a href="/home/search/page?number={{ dic1['current_page_number']+1 }}">Next</a>
 					</li>
 				</ul>
 			</div>
