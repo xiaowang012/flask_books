@@ -1,9 +1,10 @@
 #coding=utf-8
-from flask import Flask,render_template,request,url_for,redirect,session,Response,g,jsonify
-from forms import UserForms,StudentsInfoForms,SearchIdForms,RegisterForms,UploadFileForms
+from enum import _auto_null
+from flask import Flask,render_template,request,url_for,redirect,session,Response,g,jsonify,abort
+from forms import UserForms,RegisterForms,UploadFileForms,SearchBookForms,AddBooksForms
 from werkzeug.utils import secure_filename
 from config import DataBaseConfig,Config
-from models import User,Books,Permission
+from models import User,Books,Permission,UserGroup
 from decorator import login_required, routing_permission_check,get_hash_value,PERMISSION_DICT
 import os
 import xlrd
@@ -116,7 +117,7 @@ def logout():
 @login_required
 @routing_permission_check
 def home():
-    form = SearchIdForms()
+    form = SearchBookForms()
     username = session.get('user_id')
     dic1 = {'username':username,'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
     #查询book表中的所有数据
@@ -139,53 +140,116 @@ def home():
     return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
 
 #主页中的书本表格翻页
-@app.route("/home/page/<int:number>",methods = ['POST','GET'])
+@app.route("/home/page",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def home_page(number):
-    form = SearchIdForms()
-    if request.method =='GET':
-        if number == 1:
-            return redirect('home')
-        username = session.get('user_id')
-        dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
-        if 1<=number<=5:
-            dic1['active'+str(number)] = 'active'
-        elif number>5:
-            dic1['active_next'] = 'active'
-        # else:
-        #     dic1['active_Prev'] = 'active'
-        #根据传入的页码查询第几条到第几条.offset(10).limit(10).all()
-        offset_num = (int(number)-1)*5
-        limit_num = 5
-        book_info = Books.query.offset(offset_num).limit(limit_num).all()
-        if len(book_info) ==0:
-            book_info_list=[]
-        else:
-            #print(book_info)
-            book_info_list = []
-            for i in book_info:
-                book_info_list.append(i.__dict__)
-            for j in book_info_list:
-                del j['_sa_instance_state']
-                del j['add_book_time']
-                del j['book_file_name']
-            style_list = ['success','info','warning','error','']
-            for dict_data in book_info_list:
-                style_value = random.choice(style_list)
-                dict_data['style'] = style_value   
-        return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
+def home_page():
+    number = request.args.get('number')
+    try:
+        number = int(number)
+    except:
+        return abort(404)
+    else:
+        form = SearchBookForms()
+        if request.method =='GET':
+            if number == 1:
+                return redirect('home')
+            username = session.get('user_id')
+            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+            if 1<=number<=5:
+                dic1['active'+str(number)] = 'active'
+            elif number>5:
+                dic1['active_next'] = 'active'
+            # else:
+            #     dic1['active_Prev'] = 'active'
+            #根据传入的页码查询第几条到第几条.offset(10).limit(10).all()
+            offset_num = (int(number)-1)*5
+            limit_num = 5
+            book_info = Books.query.offset(offset_num).limit(limit_num).all()
+            if len(book_info) ==0:
+                book_info_list=[]
+            else:
+                #print(book_info)
+                book_info_list = []
+                for i in book_info:
+                    book_info_list.append(i.__dict__)
+                for j in book_info_list:
+                    del j['_sa_instance_state']
+                    del j['add_book_time']
+                    del j['book_file_name']
+                style_list = ['success','info','warning','error','']
+                for dict_data in book_info_list:
+                    style_value = random.choice(style_list)
+                    dict_data['style'] = style_value   
+            return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
     
 #home页面的查询翻页
-@app.route("/home/search/<int:number>",methods = ['POST','GET'])
+@app.route("/home/search/page",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def search_books(number):
-    form = SearchIdForms()
-    if request.method =='POST':
-        if form.validate_on_submit():
-            book_name = str(request.form['book_name'])
-            BOOK_NAME.append(book_name)
+def search_books():
+    number = request.args.get('number')
+    try:
+        number = int(number)
+    except:
+        return abort(404)
+    else:
+        form = SearchBookForms()
+        if request.method =='POST':
+            if form.validate_on_submit():
+                book_name = str(request.form['book_name'])
+                BOOK_NAME.append(book_name)
+                username = session.get('user_id')
+                dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
+                if 1<=number<=5:
+                    dic1['active'+str(number)] = 'active'
+                elif number>5:
+                    dic1['active_next'] = 'active'
+                offset_num = (int(number)-1)*5
+                limit_num = 5
+                book_info = Books.query.filter_by(book_name = book_name).offset(offset_num).limit(limit_num).all() 
+                if len(book_info) ==0:
+                    book_info_list=[]
+                else:
+                    #print(book_info)
+                    book_info_list = []
+                    for i in book_info:
+                        book_info_list.append(i.__dict__)
+                    for j in book_info_list:
+                        del j['_sa_instance_state']
+                        del j['add_book_time']
+                        del j['book_file_name']
+                    style_list = ['success','info','warning','error','']
+                    for dict_data in book_info_list:
+                        style_value = random.choice(style_list)
+                        dict_data['style'] = style_value
+                    # print(BOOK_NAME) 
+                return render_template('home_search.html',form = form,dic1 = dic1,list1 = book_info_list)
+            else:
+                #未通过表单校验
+                form = SearchBookForms()
+                username = session.get('user_id')
+                dic1 = {'username':username,'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'errors':'bookname can not be empty!'}
+                #查询book表中的所有数据
+                book_info = Books.query.limit(5).all()
+                if len(book_info) ==0:
+                    book_info_list=[]
+                else:
+                    #print(book_info)
+                    book_info_list = []
+                    for i in book_info:
+                        book_info_list.append(i.__dict__)
+                    for j in book_info_list:
+                        del j['_sa_instance_state']
+                        del j['add_book_time']
+                        del j['book_file_name']
+                    style_list = ['success','info','warning','error','']
+                    for dict_data in book_info_list:
+                        style_value = random.choice(style_list)
+                        dict_data['style'] = style_value
+                return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
+        elif request.method == 'GET':
+            #查询翻页请求
             username = session.get('user_id')
             dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
             if 1<=number<=5:
@@ -194,11 +258,12 @@ def search_books(number):
                 dic1['active_next'] = 'active'
             offset_num = (int(number)-1)*5
             limit_num = 5
-            book_info = Books.query.filter_by(book_name = book_name).offset(offset_num).limit(limit_num).all() 
+            #print(BOOK_NAME)
+            name = BOOK_NAME[-1]
+            book_info = Books.query.filter_by(book_name = name).offset(offset_num).limit(limit_num).all() 
             if len(book_info) ==0:
                 book_info_list=[]
             else:
-                #print(book_info)
                 book_info_list = []
                 for i in book_info:
                     book_info_list.append(i.__dict__)
@@ -209,95 +274,53 @@ def search_books(number):
                 style_list = ['success','info','warning','error','']
                 for dict_data in book_info_list:
                     style_value = random.choice(style_list)
-                    dict_data['style'] = style_value
-                # print(BOOK_NAME) 
+                    dict_data['style'] = style_value   
             return render_template('home_search.html',form = form,dic1 = dic1,list1 = book_info_list)
-        else:
-            #未通过表单校验
-            form = SearchIdForms()
-            username = session.get('user_id')
-            dic1 = {'username':username,'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'errors':'bookname can not be empty!'}
-            #查询book表中的所有数据
-            book_info = Books.query.limit(5).all()
-            if len(book_info) ==0:
-                book_info_list=[]
-            else:
-                #print(book_info)
-                book_info_list = []
-                for i in book_info:
-                    book_info_list.append(i.__dict__)
-                for j in book_info_list:
-                    del j['_sa_instance_state']
-                    del j['add_book_time']
-                    del j['book_file_name']
-                style_list = ['success','info','warning','error','']
-                for dict_data in book_info_list:
-                    style_value = random.choice(style_list)
-                    dict_data['style'] = style_value
-            return render_template('home.html',form = form,dic1 = dic1,list1 = book_info_list)
-    elif request.method == 'GET':
-        #查询翻页请求
-        username = session.get('user_id')
-        dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
-        if 1<=number<=5:
-            dic1['active'+str(number)] = 'active'
-        elif number>5:
-            dic1['active_next'] = 'active'
-        offset_num = (int(number)-1)*5
-        limit_num = 5
-        #print(BOOK_NAME)
-        name = BOOK_NAME[-1]
-        book_info = Books.query.filter_by(book_name = name).offset(offset_num).limit(limit_num).all() 
-        if len(book_info) ==0:
-            book_info_list=[]
-        else:
-            book_info_list = []
-            for i in book_info:
-                book_info_list.append(i.__dict__)
-            for j in book_info_list:
-                del j['_sa_instance_state']
-                del j['add_book_time']
-                del j['book_file_name']
-            style_list = ['success','info','warning','error','']
-            for dict_data in book_info_list:
-                style_value = random.choice(style_list)
-                dict_data['style'] = style_value   
-        return render_template('home_search.html',form = form,dic1 = dic1,list1 = book_info_list)
 
 #按类型查询表格翻页
-@app.route("/home/search/type/<type_1>/<int:number>",methods = ['POST','GET'])
+@app.route("/home/search/type",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def search_by_type(type_1,number):  
-    form = SearchIdForms()
-    type_1 = str(type_1)
-    BOOK_TYPE.append(type_1) 
-    username = session.get('user_id')
-    dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':'','type':BOOK_TYPE[-1]}
-    if 1<=number<=5:
-        dic1['active'+str(number)] = 'active'
-    elif number>5:
-        dic1['active_next'] = 'active'
-    offset_num = (int(number)-1)*5
-    limit_num = 5
-    book_info = Books.query.filter_by(book_type = type_1).offset(offset_num).limit(limit_num).all() 
-    if len(book_info) ==0:
-        book_info_list=[]
+def search_by_type():  
+    type_1 = request.args.get('type_1')
+    number = request.args.get('number')
+    if type_1:
+        try:
+            number = int(number)
+        except:
+            return abort(404)
+        else:
+            form = SearchBookForms()
+            type_1 = str(type_1)
+            BOOK_TYPE.append(type_1) 
+            username = session.get('user_id')
+            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':'','type':BOOK_TYPE[-1]}
+            if 1<=number<=5:
+                dic1['active'+str(number)] = 'active'
+            elif number>5:
+                dic1['active_next'] = 'active'
+            offset_num = (int(number)-1)*5
+            limit_num = 5
+            book_info = Books.query.filter_by(book_type = type_1).offset(offset_num).limit(limit_num).all() 
+            if len(book_info) ==0:
+                book_info_list=[]
+            else:
+                #print(book_info)
+                book_info_list = []
+                for i in book_info:
+                    book_info_list.append(i.__dict__)
+                for j in book_info_list:
+                    del j['_sa_instance_state']
+                    del j['add_book_time']
+                    del j['book_file_name']
+                style_list = ['success','info','warning','error','']
+                for dict_data in book_info_list:
+                    style_value = random.choice(style_list)
+                    dict_data['style'] = style_value  
+            return render_template('home_search_type.html',form = form,dic1 = dic1,list1 = book_info_list)
     else:
-        #print(book_info)
-        book_info_list = []
-        for i in book_info:
-            book_info_list.append(i.__dict__)
-        for j in book_info_list:
-            del j['_sa_instance_state']
-            del j['add_book_time']
-            del j['book_file_name']
-        style_list = ['success','info','warning','error','']
-        for dict_data in book_info_list:
-            style_value = random.choice(style_list)
-            dict_data['style'] = style_value  
-    return render_template('home_search_type.html',form = form,dic1 = dic1,list1 = book_info_list)
-          
+        return abort(404) 
+
 # #管理
 # @app.route('/addStudents',methods = ['POST','GET'])
 # @login_required
@@ -490,87 +513,102 @@ def user_mgr():
         return render_template('user.html',user_list = user_list,dic1 = dic1,form = form)
 
 #管理界面用户管理翻页
-@app.route("/management/user/page/<int:number>",methods = ['POST','GET'])
+@app.route("/management/user/page",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def user_page(number):
-    form = UploadFileForms()
-    if request.method == 'GET':
-        #查询用户数据
-        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
-        if 1<=number<=5:
-            dic1['active'+str(number)] = 'active'
-        elif number>5:
-            dic1['active_next'] = 'active'
-        # else:
-        #     dic1['active_Prev'] = 'active'
-        #根据参数查询用户数据，一次10条
-        offset_num = (int(number)-1)*10
-        limit_num = 10
-        user_info = User.query.offset(offset_num).limit(limit_num).all()
-        #user_info = User.query.limit(10).all()
-        user_list = []
-        if len(user_info) ==0:
+def user_page():
+    number = request.args.get('number')
+    try:
+        number = int(number)
+    except:
+        return abort(404)
+    else:
+        form = UploadFileForms()
+        if request.method == 'GET':
+            #查询用户数据
+            dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+            if 1<=number<=5:
+                dic1['active'+str(number)] = 'active'
+            elif number>5:
+                dic1['active_next'] = 'active'
+            # else:
+            #     dic1['active_Prev'] = 'active'
+            #根据参数查询用户数据，一次10条
+            offset_num = (int(number)-1)*10
+            limit_num = 10
+            user_info = User.query.offset(offset_num).limit(limit_num).all()
+            #user_info = User.query.limit(10).all()
             user_list = []
-        else:
-            for userdata in user_info:
-                user_list.append( userdata.__dict__)
-            k = 0
-            style_list = ['success','info','warning','error','']
-            for j in user_list:
-                k+=1
-                #删除多余的字段
-                del j['_sa_instance_state']
-                del j['hash_pwd']
-                del j['salt']
-                #增加一个id字段
-                j['id'] = k
-                #根据group id 改写数据为不同的角色组
-                if j['group_id'] ==1:
-                    del j['group_id']
-                    j['group'] = 'admin'
-                elif j['group_id'] == 2:
-                    del j['group_id']
-                    j['group'] = 'others'
-                #为表格加随机样式
-                j['style'] = random.choice(style_list)
-        return render_template('user.html',user_list = user_list,dic1 = dic1,form = form)
+            if len(user_info) ==0:
+                user_list = []
+            else:
+                for userdata in user_info:
+                    user_list.append( userdata.__dict__)
+                k = 0
+                style_list = ['success','info','warning','error','']
+                for j in user_list:
+                    k+=1
+                    #删除多余的字段
+                    del j['_sa_instance_state']
+                    del j['hash_pwd']
+                    del j['salt']
+                    #增加一个id字段
+                    j['id'] = k
+                    #根据group id 改写数据为不同的角色组
+                    if j['group_id'] ==1:
+                        del j['group_id']
+                        j['group'] = 'admin'
+                    elif j['group_id'] == 2:
+                        del j['group_id']
+                        j['group'] = 'others'
+                    #为表格加随机样式
+                    j['style'] = random.choice(style_list)
+            return render_template('user.html',user_list = user_list,dic1 = dic1,form = form)
 
 #管理界面用户管理 ：修改用户组(admin切换成others，others切换成admin)
-@app.route("/management/user/changegroup/<username>/<group>/",methods = ['POST','GET'])
+@app.route("/management/user/changegroup",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def change_group(username,group):
-    if group == 'admin':
-        #修改为others
-        user_data = User.query.filter(User.username == username).first()
-        if user_data:
-            user_data.group_id = 2
-            db.session.commit()
-            return redirect('/management/user')
-        else:
-            return 'no data'
-    elif group == 'others':
-        user_data = User.query.filter(User.username == username).first()
-        if user_data:
-            user_data.group_id = 1
-            db.session.commit()
-            return redirect('/management/user')
-        else:
-            return 'no data'
+def change_group():
+    username = request.args.get('username')
+    group = request.args.get('group')
+    if username and group:
+        if group == 'admin':
+            #修改为others
+            user_data = User.query.filter(User.username == username).first()
+            if user_data:
+                user_data.group_id = 2
+                db.session.commit()
+                return redirect('/management/user')
+            else:
+                return 'no data'
+        elif group == 'others':
+            user_data = User.query.filter(User.username == username).first()
+            if user_data:
+                user_data.group_id = 1
+                db.session.commit()
+                return redirect('/management/user')
+            else:
+                return 'no data'
+    else:
+        return abort(404)
 
 #管理界面用户管理 ：删除指定用户
-@app.route("/management/user/delete/<username>",methods = ['POST','GET'])
+@app.route("/management/user/delete",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
-def delete_user(username):
-    user_data = User.query.filter(User.username == username).first()
-    if user_data:
-        db.session.delete(user_data)
-        db.session.commit()
-        return redirect('/management/user')
+def delete_user():
+    username = request.args.get('username')
+    if username:
+        user_data = User.query.filter(User.username == username).first()
+        if user_data:
+            db.session.delete(user_data)
+            db.session.commit()
+            return redirect('/management/user')
+        else:
+            return abort(404)
     else:
-        return 'no data'
+        return abort(404)
 
 #批量注册用户数据
 @app.route("/management/user/addusers",methods = ['POST','GET'])
@@ -580,7 +618,7 @@ def add_users():
     form = UploadFileForms()
     if request.method == 'GET':
         dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
-            #根据参数查询用户数据，一次10条
+        #根据参数查询用户数据，一次10条
         user_info = User.query.limit(10).all()
         user_list = []
         if len(user_info) ==0:
@@ -771,6 +809,34 @@ def download_upload_user_template():
     else:  
         return jsonify({'code':404,'message':'Unable to find resources'})
 
+#刷新权限PERMISSION_DICT的值
+@app.route("/management/refresh")
+def refresh_permission():
+    cur_url = request.args.get('cur_url')
+    if cur_url:
+        #更新权限表
+        print(cur_url)
+        user_group_list = []
+        user_group_data = UserGroup.query.all()
+        if user_group_data:
+            for i in user_group_data:
+                user_group_list.append( i.name)
+            for j in user_group_list:
+                result2 = Permission.query.filter(Permission.name == j).all()
+                set1 = set()
+                if result2:
+                    for k in result2:
+                        set1.add(k.url)
+                    PERMISSION_DICT[j] = set1
+                    #print(PERMISSION_DICT)
+                    return redirect(cur_url)
+                else:
+                    return abort(404)
+        else:
+            return abort(404)
+    else:
+        return abort(404)
+
 #管理界面系统权限管理
 @app.route("/management/system",methods = ['POST','GET'])
 @login_required
@@ -779,41 +845,173 @@ def system_page():
     return render_template('system.html')
 
 #书本下载
-@app.route("/book/download/<int:id>",methods = ['POST','GET'])
+@app.route("/book/download",methods = ['POST','GET'])
 @login_required
 @routing_permission_check  
-def download_book(id):
-    #在window和linux上自动拼接为windows的 '\\' 或者linux的'/' 
-    book_info = Books.query.filter(Books.id == int(id)).first()
-    if book_info:
-        file_name = str(book_info.book_file_name )
-        #读取下载次数+1
-        number1 = int(book_info.number_of_downloads)+1
-        book_dir = os.getcwd() + os.path.join(os.sep,'media',file_name )
-        #打开指定文件准备传输
-        #循环读取文件
-        def sendfile(file_path):
-            with open(file_path, 'rb') as targetfile:
-                while True:
-                    data = targetfile.read(20*1024*1024)
-                    if not data:
-                        break
-                    yield data
-        response = Response(sendfile(book_dir), content_type='application/octet-stream')
-        response.headers["Content-disposition"] = 'attachment; filename=%s' % file_name 
-        #更新下载次数
-        book_info.number_of_downloads = number1
-        db.session.commit()
-        return response
-    else:  
-        return jsonify({'code':404,'message':'Unable to find resources'})
-
+def download_book():
+    id = request.args.get('code')
+    try:
+        id = int(id)
+    except:
+        return abort(404)
+    else:
+        #在window和linux上自动拼接为windows的 '\\' 或者linux的'/' 
+        book_info = Books.query.filter(Books.id == int(id)).first()
+        if book_info:
+            file_name = str(book_info.book_file_name )
+            #读取下载次数+1
+            number1 = int(book_info.number_of_downloads)+1
+            book_dir = os.getcwd() + os.path.join(os.sep,'media',file_name )
+            #打开指定文件准备传输
+            #循环读取文件
+            def sendfile(file_path):
+                with open(file_path, 'rb') as targetfile:
+                    while True:
+                        data = targetfile.read(20*1024*1024)
+                        if not data:
+                            break
+                        yield data
+            response = Response(sendfile(book_dir), content_type='application/octet-stream')
+            response.headers["Content-disposition"] = 'attachment; filename=%s' % file_name 
+            #更新下载次数
+            book_info.number_of_downloads = number1
+            db.session.commit()
+            return response
+        else:  
+            return jsonify({'code':404,'message':'Unable to find resources'})
+    
 #管理界面书本管理
 @app.route("/management/book",methods = ['POST','GET'])
 @login_required
 @routing_permission_check
 def book_page():
-    return render_template('book.html')
+    form = SearchBookForms()
+    dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
+    #查询book表中的所有数据
+    book_info = Books.query.limit(10).all()
+    if len(book_info) ==0:
+        book_info_list=[]
+    else:
+        #print(book_info)
+        book_info_list = []
+        for i in book_info:
+            book_info_list.append(i.__dict__)
+        for j in book_info_list:
+            del j['_sa_instance_state']
+        style_list = ['success','info','warning','error','']
+        for dict_data in book_info_list:
+            style_value = random.choice(style_list)
+            dict_data['style'] = style_value
+    return render_template('book.html',form = form,dic1 = dic1,list1 = book_info_list)
+
+#管理界面书本管理页面翻页
+@app.route('/management/book/page',methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def book_mgr():
+    number = request.args.get('number')
+    try:
+        number = int(number)
+    except:
+        return abort(404)
+    else:
+        form = UploadFileForms()
+        #查询用户数据
+        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+        if 1<=number<=5:
+            dic1['active'+str(number)] = 'active'
+        elif number>5:
+            dic1['active_next'] = 'active'
+        #根据参数查询用户数据，一次10条
+        offset_num = (number-1)*10
+        limit_num = 10
+        book_info = Books.query.offset(offset_num).limit(limit_num).all()
+        book_list = []
+        if len(book_info) ==0:
+            book_list = []
+        else:
+            for bookdata in book_info:
+                book_list.append( bookdata.__dict__)
+            k = 0
+            style_list = ['success','info','warning','error','']
+            for j in book_list:
+                k+=1
+                #删除多余的字段
+                del j['_sa_instance_state']
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('book.html',list1= book_list,dic1 = dic1,form = form)
+
+#管理界面书本管理修改书本信息
+
+#管理界面书本管理删除书本信息
+@app.route("/management/book/delete",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def delete_book():
+    id = request.args.get('id')
+    if id:
+        try:
+            id = int(id)
+        except:
+            return abort(404)
+        else:
+            book_data = Books.query.filter(Books.id == id).first()
+            if book_data:
+                #删除对应的书本压缩包
+                remove_file = book_data.book_file_name
+                file_path = os.getcwd() + os.path.join(os.sep,'media',remove_file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                db.session.delete(book_data)
+                db.session.commit()
+                return redirect('/management/book')
+            else:
+                return abort(404)
+    else:
+        return abort(404)
+
+#管理界面书本管理添加书本
+@app.route("/management/book/addbook",methods = ['POST','GET'])
+@login_required
+# @routing_permission_check
+def add_book():
+    form = AddBooksForms()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            book_name = request.form['bookname']
+            book_type = request.form['booktype']
+            book_introduction = request.form['book_description']
+            issue_year = request.form['issue_year']
+            bookfile = request.files['bookfile']
+            if book_name and book_type and book_introduction and issue_year and bookfile:
+                #接收文件以时间戳为文件名
+                #获取文件扩展名
+                file_namex, file_extension = os.path.splitext(str(bookfile.filename))
+                file_name = str(time.time()) + file_extension
+                file_path = os.getcwd() + os.path.join(os.sep,'media',file_name).replace(file_name,'')
+                bookfile.save(file_path + secure_filename(file_name))
+                #压缩文件
+                zipped_file_name = str(time.time()) + '.zip'
+                zipped_path = file_path + zipped_file_name
+                with zipfile.ZipFile(zipped_path, 'w', zipfile.ZIP_DEFLATED) as zf:        
+                    zf.write(file_path + file_name,arcname = file_name)
+                #删除源文件，只要压缩包
+                if os.path.isfile(file_path + file_name) == True:
+                    os.remove(file_path + file_name)
+                #写入数据库
+                data = Books(id = None ,book_name = book_name,book_type = book_type,book_introduction = book_introduction,\
+                    issue_year=issue_year,book_file_name = zipped_file_name,add_book_time=time.strftime('%Y-%m-%d %H:%M:%S'),\
+                    number_of_downloads=0)
+                db.session.add(data)
+                db.session.flush()
+                db.session.commit()
+                return 'ok'
+            else:
+                return abort(404)
+        else:
+            return abort(403)
+    return abort(404)
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0',port=5000,debug = True)
