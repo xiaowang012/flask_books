@@ -40,6 +40,53 @@
                 <h3 style="margin-top: 80px;" class="text-center">
                     Books
                 </h3>
+                <a id="modal-207274" href="/management/refresh?cur_url=/management/book" role="button" class="btn btn-default btn-primary" style="float:right;font-size: smaller;" data-toggle="modal">Refresh</a>
+                <a id="modal-207274" href="#modal-container-207274" role="button" class="btn btn-default" style="float:right;font-size: smaller;" data-toggle="modal">AddBook</a>
+                <div class="modal fade" id="modal-container-207274" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                                <h4 class="modal-title" id="myModalLabel">
+                                    Add Book
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <form role="form" action="/management/book/addbook" method="post" enctype = "multipart/form-data">
+                                    {{ form.csrf_token }}
+                                    <div class="form-group">
+                                        <label for="bookname">bookname</label><input type="text" class="form-control" name="bookname" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="booktype">booktype</label>
+                                        <select name="booktype" class="form-control">
+                                            <option value="Python">Python</option>
+                                            <option value="C">C</option>
+                                            <option value="C++">C++</option>
+                                            <option value="Java">Java</option>
+                                            <option value="Javascript">Javascript</option>
+                                            <option value="Linux">Linux</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="book_description">description</label>
+                                        <textarea class="form-control" rows="3" name="book_description"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="issue_year">issue_year</label><input type="date" class="form-control" name="issue_year" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bookfile">File input</label><input type="file" name="bookfile" />
+                                       <p class="help-block">
+                                        Please select the file to upload.
+                                       </p>
+                                    </div>
+                                    <button type="submit" class="btn btn-default btn-primary">Submit</button>
+                                </form>
+                            </div>
+                        </div> 
+                    </div>
+                </div> 
                 <table style="margin-top: 15px;" class="table table-bordered">
                     <thead>
                         <tr>
@@ -47,125 +94,95 @@
                                 ID
                             </th>
                             <th>
-                                Bookname
+                                Book Name
                             </th>
                             <th>
-                                Time
+                                Type
                             </th>
                             <th>
-                                Admin
+                                Issue Year
                             </th>
                             <th>
-                                Edit
+                                File Name
                             </th>
                             <th>
-                                Delete
+                                Add Time
+                            </th>
+                            <th>
+                                Number of Download
+                            </th>
+                            <th>
+                                Operation
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                heyi01
-                            </td>
-                            <td>
-                                2021-12-28 14:32:47
-                            </td>
-                            <td>
-                                True
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="success">
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                01/04/2012
-                            </td>
-                            <td>
-                                Approved
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="error">
-                            <td>
-                                2
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                02/04/2012
-                            </td>
-                            <td>
-                                Declined
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="warning">
-                            <td>
-                                3
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                03/04/2012
-                            </td>
-                            <td>
-                                Pending
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
-                        <tr class="info">
-                            <td>
-                                4
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                04/04/2012
-                            </td>
-                            <td>
-                                Call in to confirm
-                            </td>
-                            <td>
-                                <a href="#">edit</a>
-                            </td>
-                            <td>
-                                <a href="#">delete</a>
-                            </td>
-                        </tr>
+                        {% for item in list1 %}
+                            <tr class="{{ item['style'] }}">
+                                <td>
+                                    {{ item['id'] }}
+                                </td>
+                                <td>
+                                    {{ item['book_name'] }}
+                                </td>
+                                <td>
+                                    {{ item['book_type'] }}
+                                </td>
+                                <td>
+                                    {{ item['issue_year'] }} 
+                                </td>
+                                <td>
+                                    {{ item['book_file_name'] }}
+                                </td>
+                                <td>
+                                    {{ item['add_book_time'] }}
+                                </td>
+                                <td>
+                                    {{ item['number_of_downloads'] }}
+                                </td>
+                                <td>
+                                    <a href="/management/book/update?">Update</a><a style="margin-left: 15px;" href="/management/book/delete?id={{ item['id'] }}">Delete</a>
+                                </td>
+
+                            </tr>  
+                        {% endfor %}
                     </tbody>
                 </table>
+                <div class="row clearfix">
+                    <div class="col-md-2 column">
+                    </div>
+                    <div class="col-md-6 column">
+                    </div>
+                    <div class="col-md-4 column">
+                        <ul class="pagination">
+                            <li class="{{ dic1['active_Prev'] }}">
+                                {% if dic1['current_page_number'] <=2  %}
+                                    <a href="/management/book/page?number=1">Prev</a>
+                                {% else %}
+                                    <a href="/management/book/page?number={{ dic1['current_page_number']-1 }}">Prev</a>
+                                {% endif %}
+                               </li>
+                            <li class="{{ dic1['active1'] }}">
+                                 <a href="/management/book/page?number=1">1</a>
+                            </li>
+                            <li class="{{ dic1['active2'] }}">
+                                 <a href="/management/book/page?number=2">2</a>
+                            </li>
+                            <li class="{{ dic1['active3'] }}">
+                                 <a href="/management/book/page?number=3">3</a>
+                            </li>
+                            <li class="{{ dic1['active4'] }}">
+                                 <a href="/management/book/page?number=4">4</a>
+                            </li>
+                            <li class="{{ dic1['active5'] }}">
+                                 <a href="/management/book/page?number=5">5</a>
+                            </li>
+                            <li class="{{ dic1['active_next'] }}">
+                                 <a href="/management/book/page?number={{ dic1['current_page_number']+1 }}">Next</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
