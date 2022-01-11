@@ -943,7 +943,6 @@ def book_mgr():
         return render_template('book.html',list1= book_list,dic1 = dic1,form = form)
 
 #管理界面书本管理修改书本信息
-
 #管理界面书本管理删除书本信息
 @app.route("/management/book/delete",methods = ['POST','GET'])
 @login_required
@@ -1006,12 +1005,77 @@ def add_book():
                 db.session.add(data)
                 db.session.flush()
                 db.session.commit()
-                return 'ok'
+                #添加成功，返回成功的消息，渲染页面
+                message = ' Add the book: ' + str(book_name) + ' Success!'
+                
+                dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'style':'alert alert-success alert-dismissable',\
+                    'title':'SUCCESS!','message':message}
+                #查询book表中的所有数据
+                book_info = Books.query.limit(10).all()
+                if len(book_info) ==0:
+                    book_info_list=[]
+                else:
+                    #print(book_info)
+                    book_info_list = []
+                    for i in book_info:
+                        book_info_list.append(i.__dict__)
+                    for j in book_info_list:
+                        del j['_sa_instance_state']
+                    style_list = ['success','info','warning','error','']
+                    for dict_data in book_info_list:
+                        style_value = random.choice(style_list)
+                        dict_data['style'] = style_value
+                return render_template('book.html',form = form,dic1 = dic1,list1 = book_info_list)
             else:
-                return abort(404)
+                #request中的数据不完整
+                message = ' No data!'
+                dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'style':'alert alert-dismissable alert-danger',\
+                    'title':'FAILED! ','message':message}
+                #查询book表中的所有数据
+                book_info = Books.query.limit(10).all()
+                if len(book_info) ==0:
+                    book_info_list=[]
+                else:
+                    #print(book_info)
+                    book_info_list = []
+                    for i in book_info:
+                        book_info_list.append(i.__dict__)
+                    for j in book_info_list:
+                        del j['_sa_instance_state']
+                    style_list = ['success','info','warning','error','']
+                    for dict_data in book_info_list:
+                        style_value = random.choice(style_list)
+                        dict_data['style'] = style_value
+                return render_template('book.html',form = form,dic1 = dic1,list1 = book_info_list)
         else:
-            return abort(403)
-    return abort(404)
+            #未通过表单校验
+            message = ' Failed form validation!'
+            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'style':'alert alert-dismissable alert-danger',\
+                'title':'ERROR! ','message':message}
+            #将form中的error 信息加入到dic1中
+            if form.errors:
+                dic_errors = form.errors
+                for key,value in dic_errors.items():
+                    message += '  ' +str(value[0]) + '  '
+            dic1['message'] = message
+            #查询book表中的所有数据
+            book_info = Books.query.limit(10).all()
+            if len(book_info) ==0:
+                book_info_list=[]
+            else:
+                #print(book_info)
+                book_info_list = []
+                for i in book_info:
+                    book_info_list.append(i.__dict__)
+                for j in book_info_list:
+                    del j['_sa_instance_state']
+                style_list = ['success','info','warning','error','']
+                for dict_data in book_info_list:
+                    style_value = random.choice(style_list)
+                    dict_data['style'] = style_value
+            return render_template('book.html',form = form,dic1 = dic1,list1 = book_info_list)
+    elif request.method == 'GET':
+        return redirect('management/book')
 
 if __name__ == '__main__':
-    app.run(host = '0.0.0.0',port=5000,debug = True)
+    app.run(host = '127.0.0.1',port=5000,debug = True)
