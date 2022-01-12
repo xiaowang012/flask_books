@@ -947,6 +947,7 @@ def book_mgr():
 @login_required
 @routing_permission_check
 def update_book():
+    form = AddBooksForms()
     if request.method == 'POST':
         id = request.form['id']
         book_name = request.form['bookname1']
@@ -958,25 +959,70 @@ def update_book():
             book_info = Books.query.filter(Books.id == int(id)).first()
             if book_info:
                 if book_name != '':
+                    msg1 = 'book_name'
                     book_info.book_name = str(book_name)
+                else:
+                    msg1 =''
                 if book_type != '':
+                    msg2 = 'book_type'
                     book_info.book_type = str(book_type)
+                else:
+                    msg2 =''
                 if book_description != '':
+                    msg3 = 'book_description'
                     book_info.book_introduction = str(book_description)
+                else:
+                    msg3 =''
                 if issue_year != '':
+                    msg4 = 'issue_year'
                     book_info.issue_year = str(issue_year)
+                else:
+                    msg4 = ''
                 if file_name != '':
+                    msg5 = 'file_name'
                     book_info.book_file_name = str(file_name)
+                else:
+                    msg5 =''
                 db.session.commit()
                 db.session.close()
-                return 'ok'
+                #添加成功后渲染到主页
+                mssage_full = msg1 + ' '+msg2+ ' ' + msg3 + ' '+ msg4 + ' '+ msg5
+                if mssage_full == '':
+                    message = 'Update data: None Success!'
+                else:
+                    message = 'Update data: '+ mssage_full +' Success!'
+                style = 'alert alert-success alert-dismissable'
+                title = 'SUCCESS! '
             else:
-                return 'lost id'
+                message = 'No data!'
+                style = 'alert alert-dismissable alert-danger'
+                title = 'Warning! '   
         else:
-            return 'failed'
-        
-    else:
-        return abort(404)
+            message = 'Lost ID!'
+            style = 'alert alert-dismissable alert-danger'
+            title = 'Warning! '   
+        #返回对应的错误信息渲染页面
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+        dic1['message'] = message
+        dic1['style'] = style
+        dic1['title'] = title
+        #根据参数查询用户数据，一次10条
+        book_info = Books.query.limit(10).all()
+        book_list = []
+        if len(book_info) ==0:
+            user_list = []
+        else:
+            for userdata in book_info:
+                book_list.append( userdata.__dict__)
+            style_list = ['success','info','warning','error','']
+            for j in book_list:
+                #删除多余的字段
+                del j['_sa_instance_state']
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('book.html',form = form,list1 = book_list,dic1 = dic1)
+    elif request.method == 'GET':
+        return redirect('/management/book')
 
 #管理界面书本管理删除书本信息
 @app.route("/management/book/delete",methods = ['POST','GET'])
