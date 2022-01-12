@@ -943,6 +943,41 @@ def book_mgr():
         return render_template('book.html',list1= book_list,dic1 = dic1,form = form)
 
 #管理界面书本管理修改书本信息
+@app.route("/management/book/update",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def update_book():
+    if request.method == 'POST':
+        id = request.form['id']
+        book_name = request.form['bookname1']
+        book_type = request.form['booktype1']
+        book_description = request.form['book_description']
+        issue_year = request.form['issue_year']
+        file_name = request.form['file_name']
+        if id !='':
+            book_info = Books.query.filter(Books.id == int(id)).first()
+            if book_info:
+                if book_name != '':
+                    book_info.book_name = str(book_name)
+                if book_type != '':
+                    book_info.book_type = str(book_type)
+                if book_description != '':
+                    book_info.book_introduction = str(book_description)
+                if issue_year != '':
+                    book_info.issue_year = str(issue_year)
+                if file_name != '':
+                    book_info.book_file_name = str(file_name)
+                db.session.commit()
+                db.session.close()
+                return 'ok'
+            else:
+                return 'lost id'
+        else:
+            return 'failed'
+        
+    else:
+        return abort(404)
+
 #管理界面书本管理删除书本信息
 @app.route("/management/book/delete",methods = ['POST','GET'])
 @login_required
@@ -983,7 +1018,7 @@ def add_book():
             book_introduction = request.form['book_description']
             issue_year = request.form['issue_year']
             bookfile = request.files['bookfile']
-            if book_name and book_type and book_introduction and issue_year and bookfile:
+            if book_name and book_type != "None" and book_introduction and issue_year and bookfile:
                 #接收文件以时间戳为文件名
                 #获取文件扩展名
                 file_namex, file_extension = os.path.splitext(str(bookfile.filename))
