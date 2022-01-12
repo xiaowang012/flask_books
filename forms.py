@@ -1,6 +1,7 @@
 #coding=utf-8
 from flask_wtf import FlaskForm
 from wtforms import StringField,PasswordField,SelectField,DateField,SubmitField,FileField,TextAreaField
+from wtforms.fields.core import IntegerField
 from wtforms.validators import AnyOf, DataRequired, EqualTo,Length, NumberRange
 from flask_wtf.file import FileRequired,FileAllowed
 
@@ -20,7 +21,7 @@ class UserForms(FlaskForm):
 #添加书本表单
 class AddBooksForms(FlaskForm):
     bookname = StringField('bookname',validators = [DataRequired('bookname cannot be empty!'),Length(1,50,message = 'The bookname must be 1-50 in length')])
-    # booktype = SelectField ('booktype',validators=[DataRequired('booktype cannot be empty!')])
+    booktype = StringField ('booktype',validators=[DataRequired('booktype cannot be empty!')])
     book_description = TextAreaField('book_description',validators=[DataRequired('book description cannot be empty!')])
     issue_year = DateField ('issue_year',validators=[DataRequired('book issue year cannot be empty!')])
     bookfile = FileField('bookfile',validators = [FileRequired(message = 'File cannot be empty!'),FileAllowed(['pdf','doc','docx','txt'],message = 'File format error (pdf,doc,docx,txt only)!')])
@@ -35,3 +36,13 @@ class SearchBookForms(FlaskForm):
 class UploadFileForms(FlaskForm):
     file = FileField('file',validators = [FileRequired(message = 'File cannot be empty!'),FileAllowed(['xlsx','xls'],message = 'File format error (XLSX/XLS only)!')])
     submit = SubmitField('submit')
+
+# #book管理界面修改书本表单
+# class UpdateBookForms(FlaskForm):
+#     book_name = StringField('bookname1') 
+#     book_type = StringField('booktype1')
+#     book_description = TextAreaField('book_description')
+#     issue_year = DateField ('issue_year')
+#     file_name = StringField('file_name')
+#     submit = SubmitField('submit')
+
