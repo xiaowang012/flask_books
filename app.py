@@ -1,7 +1,6 @@
 #coding=utf-8
-from enum import _auto_null
 from flask import Flask,render_template,request,url_for,redirect,session,Response,g,jsonify,abort
-from forms import UserForms,RegisterForms,UploadFileForms,SearchBookForms,AddBooksForms
+from forms import UserForms,RegisterForms,UploadFileForms,SearchBookForms,AddBooksForms,AddPermissionForms
 from werkzeug.utils import secure_filename
 from config import DataBaseConfig,Config
 from models import User,Books,Permission,UserGroup
@@ -29,7 +28,7 @@ BOOK_TYPE = []
 @app.route('/',methods = ['POST','GET'])
 def index():
     if 'user_id' in session:
-       return redirect('home') 
+       return redirect('home')
     else:
         return redirect('login')
 
@@ -133,7 +132,7 @@ def home():
             del j['_sa_instance_state']
             del j['add_book_time']
             del j['book_file_name']
-        style_list = ['success','info','warning','error','']
+        style_list = ['success','info','warning','error']
         for dict_data in book_info_list:
             style_value = random.choice(style_list)
             dict_data['style'] = style_value
@@ -177,7 +176,7 @@ def home_page():
                     del j['_sa_instance_state']
                     del j['add_book_time']
                     del j['book_file_name']
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for dict_data in book_info_list:
                     style_value = random.choice(style_list)
                     dict_data['style'] = style_value   
@@ -219,7 +218,7 @@ def search_books():
                         del j['_sa_instance_state']
                         del j['add_book_time']
                         del j['book_file_name']
-                    style_list = ['success','info','warning','error','']
+                    style_list = ['success','info','warning','error']
                     for dict_data in book_info_list:
                         style_value = random.choice(style_list)
                         dict_data['style'] = style_value
@@ -243,7 +242,7 @@ def search_books():
                         del j['_sa_instance_state']
                         del j['add_book_time']
                         del j['book_file_name']
-                    style_list = ['success','info','warning','error','']
+                    style_list = ['success','info','warning','error']
                     for dict_data in book_info_list:
                         style_value = random.choice(style_list)
                         dict_data['style'] = style_value
@@ -271,7 +270,7 @@ def search_books():
                     del j['_sa_instance_state']
                     del j['add_book_time']
                     del j['book_file_name']
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for dict_data in book_info_list:
                     style_value = random.choice(style_list)
                     dict_data['style'] = style_value   
@@ -313,7 +312,7 @@ def search_by_type():
                     del j['_sa_instance_state']
                     del j['add_book_time']
                     del j['book_file_name']
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for dict_data in book_info_list:
                     style_value = random.choice(style_list)
                     dict_data['style'] = style_value  
@@ -482,7 +481,8 @@ def user_mgr():
     form = UploadFileForms()
     if request.method == 'GET':
         #查询用户数据
-        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                'active_next':'','active_Prev':'','current_page_number':1}
         #根据参数查询用户数据，一次10条
         user_info = User.query.limit(10).all()
         user_list = []
@@ -492,7 +492,7 @@ def user_mgr():
             for userdata in user_info:
                 user_list.append( userdata.__dict__)
             k = 0
-            style_list = ['success','info','warning','error','']
+            style_list = ['success','info','warning','error']
             for j in user_list:
                 k+=1
                 #删除多余的字段
@@ -545,7 +545,7 @@ def user_page():
                 for userdata in user_info:
                     user_list.append( userdata.__dict__)
                 k = 0
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for j in user_list:
                     k+=1
                     #删除多余的字段
@@ -616,36 +616,8 @@ def delete_user():
 @routing_permission_check
 def add_users():
     form = UploadFileForms()
-    if request.method == 'GET':
-        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
-        #根据参数查询用户数据，一次10条
-        user_info = User.query.limit(10).all()
-        user_list = []
-        if len(user_info) ==0:
-            user_list = []
-        else:
-            for userdata in user_info:
-                user_list.append( userdata.__dict__)
-            k = 0
-            style_list = ['success','info','warning','error','']
-            for j in user_list:
-                k+=1
-                #删除多余的字段
-                del j['_sa_instance_state']
-                del j['hash_pwd']
-                del j['salt']
-                #增加一个id字段
-                j['id'] = k
-                #根据group id 改写数据为不同的角色组
-                if j['group_id'] ==1:
-                    del j['group_id']
-                    j['group'] = 'admin'
-                elif j['group_id'] == 2:
-                    del j['group_id']
-                    j['group'] = 'others'
-                #为表格加随机样式
-                j['style'] = random.choice(style_list)
-        return render_template('user.html',form = form,user_list = user_list,dic1 = dic1)
+    if request.method =='GET':
+        return abort(404)
     elif request.method =='POST':
         if form.validate_on_submit():
             #通过表单验证
@@ -713,7 +685,8 @@ def add_users():
             if os.path.isfile(file_path + file_name) ==True:
                 os.remove(file_path + file_name)
             #返回对应的错误信息渲染页面
-            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                    'active_next':'','active_Prev':'','current_page_number':1}
             dic1['message'] = message
             dic1['style'] = style
             dic1['title'] = title
@@ -726,7 +699,7 @@ def add_users():
                 for userdata in user_info:
                     user_list.append( userdata.__dict__)
                 k = 0
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for j in user_list:
                     k+=1
                     #删除多余的字段
@@ -748,7 +721,8 @@ def add_users():
 
         else:
             #未通过表单校验！
-            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                    'active_next':'','active_Prev':'','current_page_number':1}
             #未通过表单校验将报错信息传入dic1
             if form.errors:
                 message = ''
@@ -766,7 +740,7 @@ def add_users():
                 for userdata in user_info:
                     user_list.append( userdata.__dict__)
                 k = 0
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for j in user_list:
                     k+=1
                     #删除多余的字段
@@ -811,6 +785,8 @@ def download_upload_user_template():
 
 #刷新权限PERMISSION_DICT的值
 @app.route("/management/refresh")
+@login_required
+@routing_permission_check
 def refresh_permission():
     cur_url = request.args.get('cur_url')
     if cur_url:
@@ -836,13 +812,6 @@ def refresh_permission():
             return abort(404)
     else:
         return abort(404)
-
-#管理界面系统权限管理
-@app.route("/management/system",methods = ['POST','GET'])
-@login_required
-@routing_permission_check
-def system_page():
-    return render_template('system.html')
 
 #书本下载
 @app.route("/book/download",methods = ['POST','GET'])
@@ -885,7 +854,7 @@ def download_book():
 @login_required
 @routing_permission_check
 def book_page():
-    form = SearchBookForms()
+    form = AddBooksForms()
     dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
     #查询book表中的所有数据
     book_info = Books.query.limit(10).all()
@@ -898,7 +867,7 @@ def book_page():
             book_info_list.append(i.__dict__)
         for j in book_info_list:
             del j['_sa_instance_state']
-        style_list = ['success','info','warning','error','']
+        style_list = ['success','info','warning','error']
         for dict_data in book_info_list:
             style_value = random.choice(style_list)
             dict_data['style'] = style_value
@@ -917,7 +886,8 @@ def book_mgr():
     else:
         form = UploadFileForms()
         #查询用户数据
-        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'',
+                'active_next':'','active_Prev':'','current_page_number':number}
         if 1<=number<=5:
             dic1['active'+str(number)] = 'active'
         elif number>5:
@@ -933,7 +903,7 @@ def book_mgr():
             for bookdata in book_info:
                 book_list.append( bookdata.__dict__)
             k = 0
-            style_list = ['success','info','warning','error','']
+            style_list = ['success','info','warning','error']
             for j in book_list:
                 k+=1
                 #删除多余的字段
@@ -1002,7 +972,8 @@ def update_book():
             style = 'alert alert-dismissable alert-danger'
             title = 'Warning! '   
         #返回对应的错误信息渲染页面
-        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':1}
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                'active_next':'','active_Prev':'','current_page_number':1}
         dic1['message'] = message
         dic1['style'] = style
         dic1['title'] = title
@@ -1014,7 +985,7 @@ def update_book():
         else:
             for userdata in book_info:
                 book_list.append( userdata.__dict__)
-            style_list = ['success','info','warning','error','']
+            style_list = ['success','info','warning','error']
             for j in book_list:
                 #删除多余的字段
                 del j['_sa_instance_state']
@@ -1022,7 +993,7 @@ def update_book():
                 j['style'] = random.choice(style_list)
         return render_template('book.html',form = form,list1 = book_list,dic1 = dic1)
     elif request.method == 'GET':
-        return redirect('/management/book')
+        return abort(404)
 
 #管理界面书本管理删除书本信息
 @app.route("/management/book/delete",methods = ['POST','GET'])
@@ -1054,7 +1025,7 @@ def delete_book():
 #管理界面书本管理添加书本
 @app.route("/management/book/addbook",methods = ['POST','GET'])
 @login_required
-# @routing_permission_check
+@routing_permission_check
 def add_book():
     form = AddBooksForms()
     if request.method == 'POST':
@@ -1084,13 +1055,14 @@ def add_book():
                     issue_year=issue_year,book_file_name = zipped_file_name,add_book_time=time.strftime('%Y-%m-%d %H:%M:%S'),\
                     number_of_downloads=0)
                 db.session.add(data)
-                db.session.flush()
+                #db.session.flush()
                 db.session.commit()
                 #添加成功，返回成功的消息，渲染页面
                 message = ' Add the book: ' + str(book_name) + ' Success!'
                 
-                dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'style':'alert alert-success alert-dismissable',\
-                    'title':'SUCCESS!','message':message}
+                dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                        'current_page_number':1,'style':'alert alert-success alert-dismissable',
+                        'title':'SUCCESS!','message':message}
                 #查询book表中的所有数据
                 book_info = Books.query.limit(10).all()
                 if len(book_info) ==0:
@@ -1102,7 +1074,7 @@ def add_book():
                         book_info_list.append(i.__dict__)
                     for j in book_info_list:
                         del j['_sa_instance_state']
-                    style_list = ['success','info','warning','error','']
+                    style_list = ['success','info','warning','error']
                     for dict_data in book_info_list:
                         style_value = random.choice(style_list)
                         dict_data['style'] = style_value
@@ -1110,8 +1082,9 @@ def add_book():
             else:
                 #request中的数据不完整
                 message = ' No data!'
-                dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'style':'alert alert-dismissable alert-danger',\
-                    'title':'FAILED! ','message':message}
+                dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                        'current_page_number':1,'style':'alert alert-dismissable alert-danger',
+                        'title':'FAILED! ','message':message}
                 #查询book表中的所有数据
                 book_info = Books.query.limit(10).all()
                 if len(book_info) ==0:
@@ -1123,7 +1096,7 @@ def add_book():
                         book_info_list.append(i.__dict__)
                     for j in book_info_list:
                         del j['_sa_instance_state']
-                    style_list = ['success','info','warning','error','']
+                    style_list = ['success','info','warning','error']
                     for dict_data in book_info_list:
                         style_value = random.choice(style_list)
                         dict_data['style'] = style_value
@@ -1131,8 +1104,9 @@ def add_book():
         else:
             #未通过表单校验
             message = ' Failed form validation!'
-            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'style':'alert alert-dismissable alert-danger',\
-                'title':'ERROR! ','message':message}
+            dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                    'current_page_number':1,'style':'alert alert-dismissable alert-danger',
+                    'title':'ERROR! ','message':message}
             #将form中的error 信息加入到dic1中
             if form.errors:
                 dic_errors = form.errors
@@ -1150,13 +1124,248 @@ def add_book():
                     book_info_list.append(i.__dict__)
                 for j in book_info_list:
                     del j['_sa_instance_state']
-                style_list = ['success','info','warning','error','']
+                style_list = ['success','info','warning','error']
                 for dict_data in book_info_list:
                     style_value = random.choice(style_list)
                     dict_data['style'] = style_value
             return render_template('book.html',form = form,dic1 = dic1,list1 = book_info_list)
     elif request.method == 'GET':
-        return redirect('management/book')
+        return abort(404)
+
+#管理界面系统权限管理
+@app.route("/management/system",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def system_mgr():
+    form = AddPermissionForms()
+    dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
+    #获取所有的用户组给页面的select 作为选项
+    list2 = []
+    res = UserGroup.query.all()
+    for value in res:
+        list2.append(str(value.name))
+    # print(list2)
+    #查询book表中的所有数据
+    permission_info = Permission.query.limit(10).all()
+    if len(permission_info) ==0:
+        permission_info_list=[]
+    else:
+        permission_info_list = []
+        for i in permission_info:
+            permission_info_list .append(i.__dict__)
+            # print(i.__dict__)
+        for j in permission_info_list:
+            del j['_sa_instance_state']
+        style_list = ['success','info','warning','error']
+        for dict_data in permission_info_list:
+            style_value = random.choice(style_list)
+            dict_data['style'] = style_value
+    return render_template('system.html',form = form,dic1 = dic1,list1 = permission_info_list,list2 = list2)
+
+#管理界面系统管理页面翻页
+@app.route('/management/system/page',methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def system_page():
+    number = request.args.get('number')
+    try:
+        number = int(number)
+    except:
+        return abort(404)
+    else:
+        form = AddPermissionForms()
+        #获取所有的用户组给页面的select 作为选项
+        list2 = []
+        res = UserGroup.query.all()
+        for value in res:
+            list2.append(str(value.name))
+        # print(list2)
+        #查询用户数据
+        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+        if 1<=number<=5:
+            dic1['active'+str(number)] = 'active'
+        elif number>5:
+            dic1['active_next'] = 'active'
+        #根据参数查询用户数据，一次10条
+        offset_num = (number-1)*10
+        limit_num = 10
+        permission_info = Permission.query.offset(offset_num).limit(limit_num).all()
+        permission_list = []
+        if len(permission_info) ==0:
+            permission_list = []
+        else:
+            for permissiondata in permission_info:
+                permission_list.append( permissiondata.__dict__)
+            style_list = ['success','info','warning','error']
+            for j in permission_list:
+                #删除多余的字段
+                del j['_sa_instance_state']
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('system.html',list1= permission_list,dic1 = dic1,form = form,list2 = list2)
+
+#管理界面系统管理页面添加permission
+@app.route('/management/system/permission/add',methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def add_permission():
+    form = AddPermissionForms()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            name = request.form['group_name']
+            url = request.form['url']
+            description = request.form['description']
+            if  name != "None" and name != '' and url and description:
+                print(name,url,description)
+                data = Permission(id = None,name = str(name),url = str(url) ,description = str(description))
+                db.session.add(data)
+                #db.session.flush()
+                db.session.commit()
+                db.session.close()
+                message = 'Add Permission : '+ str(name) + ' ' + str(url) + ' '+ str(description) +' Success!'
+                style = 'alert alert-success alert-dismissable'
+                title = 'SUCCESS! '
+            else:
+                message = 'No data!'
+                style = 'alert alert-dismissable alert-danger'
+                title = 'Warning! ' 
+        else:
+            message = ' '
+            error_dict = form.errors
+            if error_dict :
+                for key,value in error_dict.items():
+                    message += ' '+str(value[0])
+            style = 'alert alert-dismissable alert-danger'
+            title = 'Warning! ' 
+        #渲染网页返回提示结果
+        form = AddPermissionForms()
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
+        #添加提示框的信息
+        dic1['message'] = message
+        dic1['style'] = style
+        dic1['title'] = title
+        #获取所有的用户组给页面的select 作为选项
+        list2 = []
+        res = UserGroup.query.all()
+        for value in res:
+            list2.append(str(value.name))
+        # print(list2)
+        #查询book表中的所有数据
+        permission_info = Permission.query.limit(10).all()
+        if len(permission_info) ==0:
+            permission_info_list=[]
+        else:
+            permission_info_list = []
+            for i in permission_info:
+                permission_info_list .append(i.__dict__)
+                # print(i.__dict__)
+            for j in permission_info_list:
+                del j['_sa_instance_state']
+            style_list = ['success','info','warning','error']
+            for dict_data in permission_info_list:
+                style_value = random.choice(style_list)
+                dict_data['style'] = style_value
+        return render_template('system.html',form = form,dic1 = dic1,list1 = permission_info_list,list2 = list2)
+    elif request.method == 'GET':
+        return abort(404)
+
+#管理界面系统管理页面修改permission
+@app.route("/management/system/permission/update",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def update_permission():
+    form = AddPermissionForms()
+    if request.method == 'POST':
+        id = request.form['id']
+        name = request.form['group_name']
+        url = request.form['url']
+        description = request.form['description']
+        if id !='':
+            permission_info = Permission.query.filter(Permission.id == int(id)).first()
+            if permission_info:
+                if name != '':
+                    msg1 = 'name'
+                    permission_info.name = str(name)
+                else:
+                    msg1 =''
+                if url != '':
+                    msg2 = 'url'
+                    permission_info.url = str(url)
+                else:
+                    msg2 =''
+                if description != '':
+                    msg3 = 'description'
+                    permission_info .description = str(description)
+                else:
+                    msg3 =''
+                db.session.commit()
+                db.session.close()
+                #添加成功后渲染到主页
+                mssage_full = msg1 + ' '+msg2+ ' ' + msg3
+                if mssage_full == '':
+                    message = 'Update permission: None Success!'
+                else:
+                    message = 'Update permission: '+ mssage_full +' Success!'
+                style = 'alert alert-success alert-dismissable'
+                title = 'SUCCESS! '
+            else:
+                message = 'No data!'
+                style = 'alert alert-dismissable alert-danger'
+                title = 'Warning! '   
+        else:
+            message = 'Lost ID!'
+            style = 'alert alert-dismissable alert-danger'
+            title = 'Warning! '   
+        #返回对应的错误信息渲染页面
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
+                'active_next':'','active_Prev':'','current_page_number':1}
+        dic1['message'] = message
+        dic1['style'] = style
+        dic1['title'] = title
+        #获取所有的用户组给页面的select 作为选项
+        list2 = []
+        res = UserGroup.query.all()
+        for value in res:
+            list2.append(str(value.name))
+        #根据参数查询用户数据，一次10条
+        permission_info = Permission.query.limit(10).all()
+        permission_list = []
+        if len(permission_info) ==0:
+            permission_list = []
+        else:
+            for data in permission_info:
+                permission_list.append( data.__dict__)
+            style_list = ['success','info','warning','error']
+            for j in permission_list:
+                #删除多余的字段
+                del j['_sa_instance_state']
+                #为表格加随机样式
+                j['style'] = random.choice(style_list)
+        return render_template('system.html',form = form,list1 = permission_list,dic1 = dic1,list2 = list2)
+    elif request.method == 'GET':
+        return abort(404)
+
+#管理界面系统管理页面删除permission
+@app.route("/management/system/permission/delete",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def delete_permission():
+    id = request.args.get('id')
+    if id:
+        try:
+            id = int(id)
+        except:
+            return abort(404)
+        else:
+            permission_data = Permission .query.filter(Permission.id == id).first()
+            if permission_data:
+                db.session.delete(permission_data)
+                db.session.commit()
+                return redirect('/management/system')
+            else:
+                return abort(404)
+    else:
+        return abort(404)
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0',port=5000,debug = True)
