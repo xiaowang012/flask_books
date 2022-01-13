@@ -1189,8 +1189,8 @@ def system_page():
             list2.append(str(value.name))
         # print(list2)
         #查询用户数据
-        dic1 = {'active1':'active','active2':'','active3':'','active4':'',\
-        'active5':'','current_page_number':1,'style':'','title':'','message':''}
+        dic1 = {'active1':'','active2':'','active3':'','active4':'',\
+        'active5':'','current_page_number':number,'style':'','title':'','message':''}
         if 1<=number<=5:
             dic1['active'+str(number)] = 'active'
         elif number>5:
