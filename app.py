@@ -118,7 +118,8 @@ def logout():
 def home():
     form = SearchBookForms()
     username = session.get('user_id')
-    dic1 = {'username':username,'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
+    dic1 = {'username':username,'active1':'active','active2':'','active3':'',\
+        'active4':'','active5':'','current_page_number':1}
     #查询book表中的所有数据
     book_info = Books.query.limit(5).all()
     if len(book_info) ==0:
@@ -154,7 +155,8 @@ def home_page():
             if number == 1:
                 return redirect('home')
             username = session.get('user_id')
-            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'',\
+                'active5':'','active_next':'','active_Prev':'','current_page_number':number}
             if 1<=number<=5:
                 dic1['active'+str(number)] = 'active'
             elif number>5:
@@ -199,7 +201,8 @@ def search_books():
                 book_name = str(request.form['book_name'])
                 BOOK_NAME.append(book_name)
                 username = session.get('user_id')
-                dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
+                dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'',\
+                    'active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
                 if 1<=number<=5:
                     dic1['active'+str(number)] = 'active'
                 elif number>5:
@@ -228,7 +231,8 @@ def search_books():
                 #未通过表单校验
                 form = SearchBookForms()
                 username = session.get('user_id')
-                dic1 = {'username':username,'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1,'errors':'bookname can not be empty!'}
+                dic1 = {'username':username,'active1':'active','active2':'','active3':'','active4':'',\
+                    'active5':'','current_page_number':1,'errors':'bookname can not be empty!'}
                 #查询book表中的所有数据
                 book_info = Books.query.limit(5).all()
                 if len(book_info) ==0:
@@ -250,7 +254,8 @@ def search_books():
         elif request.method == 'GET':
             #查询翻页请求
             username = session.get('user_id')
-            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
+            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'',\
+                'active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':''}
             if 1<=number<=5:
                 dic1['active'+str(number)] = 'active'
             elif number>5:
@@ -293,7 +298,9 @@ def search_by_type():
             type_1 = str(type_1)
             BOOK_TYPE.append(type_1) 
             username = session.get('user_id')
-            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number,'errors':'','type':BOOK_TYPE[-1]}
+            dic1 = {'username':username,'active1':'','active2':'','active3':'','active4':'',\
+            'active5':'','active_next':'','active_Prev':'','current_page_number':number,\
+            'errors':'','type':BOOK_TYPE[-1]}
             if 1<=number<=5:
                 dic1['active'+str(number)] = 'active'
             elif number>5:
