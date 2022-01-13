@@ -1145,7 +1145,8 @@ def add_book():
 @routing_permission_check
 def system_mgr():
     form = AddPermissionForms()
-    dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
+    dic1 = {'active1':'active','active2':'','active3':'','active4':'',\
+        'active5':'','current_page_number':1,'style':'','title':'','message':''}
     #获取所有的用户组给页面的select 作为选项
     list2 = []
     res = UserGroup.query.all()
@@ -1188,7 +1189,8 @@ def system_page():
             list2.append(str(value.name))
         # print(list2)
         #查询用户数据
-        dic1 = {'active1':'','active2':'','active3':'','active4':'','active5':'','active_next':'','active_Prev':'','current_page_number':number}
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'',\
+        'active5':'','current_page_number':1,'style':'','title':'','message':''}
         if 1<=number<=5:
             dic1['active'+str(number)] = 'active'
         elif number>5:
@@ -1246,7 +1248,8 @@ def add_permission():
             title = 'Warning! ' 
         #渲染网页返回提示结果
         form = AddPermissionForms()
-        dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'','current_page_number':1}
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'',\
+        'active5':'','current_page_number':1,'style':'','title':'','message':''}
         #添加提示框的信息
         dic1['message'] = message
         dic1['style'] = style
