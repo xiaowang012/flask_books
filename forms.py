@@ -46,3 +46,10 @@ class UploadFileForms(FlaskForm):
 #     file_name = StringField('file_name')
 #     submit = SubmitField('submit')
 
+#添加权限表单
+class AddPermissionForms(FlaskForm):
+    group_name = StringField('group_name',validators=[DataRequired('name cannot be empty!')])
+    url = StringField('url',validators=[DataRequired('url cannot be empty!')])
+    description = StringField('description',validators=[DataRequired('permission description cannot be empty!')])
+    submit = SubmitField('submit')
+
