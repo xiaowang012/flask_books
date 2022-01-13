@@ -117,7 +117,7 @@
                                     {{ item['group'] }} <a style="margin-left: 20px;" href="/management/user/changegroup?username={{ item['username'] }}&group={{ item['group'] }}">change user group</a>
                                 </td>
                                 <td>
-                                    <a href="/management/user/delete?username={{ item['username'] }}">delete</a>
+                                    <a role="button" class="btn btn-default btn-primary" style="font-size: smaller;" href="/management/user/delete?username={{ item['username'] }}">Delete</a>
                                 </td>
                             </tr>  
                         {% endfor %}
