@@ -3,7 +3,7 @@ from dbs import db
 
 #定义数据表和字段
 class Books(db.Model):
-    id = db.Column(db.Integer,primary_key = True)
+    id = db.Column(db.Integer,primary_key = True,autoincrement=True)
     book_name = db.Column(db.String(50))
     book_type = db.Column(db.String(50))
     book_introduction = db.Column(db.String(100))
@@ -42,10 +42,12 @@ class Permission(db.Model):
     id = db.Column(db.Integer,autoincrement=True,primary_key = True)
     name = db.Column(db.String(50))
     url = db.Column(db.String(50))
-    def __init__(self,id,name,url):
+    description = db.Column(db.String(100))
+    def __init__(self,id,name,url,description):
         self.id = id
         self.name = name
         self.url = url
+        self.description = description
         
 #用户组表      
 class UserGroup(db.Model):
