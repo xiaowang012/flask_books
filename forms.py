@@ -53,3 +53,7 @@ class AddPermissionForms(FlaskForm):
     description = StringField('description',validators=[DataRequired('permission description cannot be empty!')])
     submit = SubmitField('submit')
 
+#批量导入权限的表单
+class UploadPermissionForms(FlaskForm):
+    file1 = FileField('file1',validators = [FileRequired(message = 'File cannot be empty!'),FileAllowed(['xlsx','xls'],message = 'File format error (XLSX/XLS only)!')])
+    submit = SubmitField('submit')
