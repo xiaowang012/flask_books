@@ -58,6 +58,7 @@
                 </div> 
                 <a id="modal-207274" href="/management/refresh?cur_url=/management/system" role="button" class="btn btn-default btn-primary" style="float:right;font-size: smaller;" data-toggle="modal">Refresh</a>
                 <a id="modal-207274" href="#modal-container-207274" role="button" class="btn btn-default" style="float:right;font-size: smaller;" data-toggle="modal">New Per</a>
+                <a id="modal-207276" href="#modal-container-207276" role="button" class="btn btn-default btn-primary" style="float:right;font-size: smaller;" data-toggle="modal">Upload</a>
                 <div class="modal fade" id="modal-container-207274" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -85,6 +86,31 @@
                                     <div class="form-group">
                                         <label for="description">description</label>
                                         <textarea class="form-control" rows="3" name="description"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-default btn-primary">Submit</button>
+                                </form>
+                            </div>
+                        </div> 
+                    </div>
+                </div> 
+                <div class="modal fade" id="modal-container-207276" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                                <h4 class="modal-title" id="myModalLabel">
+                                    Upload Permission
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <form role="form" action="/management/system/permission/upload" method="post" enctype="multipart/form-data">
+                                    {{ form1.csrf_token }}
+                                    <div class="form-group">
+                                        <label for="file1">File input</label><input type="file" name="file1" />
+                                        <p class="help-block">
+                                            The template download link is as follows:
+                                            <a href="/management/system/permission/upload/download">Click to download</a>
+                                        </p>
                                     </div>
                                     <button type="submit" class="btn btn-default btn-primary">Submit</button>
                                 </form>
