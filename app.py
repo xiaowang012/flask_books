@@ -1,10 +1,13 @@
 #coding=utf-8
-from flask import Flask,render_template,request,url_for,redirect,session,Response,g,jsonify,abort
-from forms import UserForms,RegisterForms,UploadFileForms,SearchBookForms,AddBooksForms,AddPermissionForms
+from flask import Flask,render_template,request,\
+    url_for,redirect,session,Response,g,jsonify,abort
+from forms import UserForms,RegisterForms,UploadFileForms,SearchBookForms,\
+    AddBooksForms,AddPermissionForms,UploadPermissionForms
 from werkzeug.utils import secure_filename
 from config import DataBaseConfig,Config
 from models import User,Books,Permission,UserGroup
-from decorator import login_required, routing_permission_check,get_hash_value,PERMISSION_DICT
+from decorator import login_required, \
+    routing_permission_check,get_hash_value,PERMISSION_DICT
 import os
 import xlrd
 import time
@@ -798,7 +801,7 @@ def refresh_permission():
     cur_url = request.args.get('cur_url')
     if cur_url:
         #更新权限表
-        print(cur_url)
+        #print(cur_url)
         user_group_list = []
         user_group_data = UserGroup.query.all()
         if user_group_data:
@@ -1145,6 +1148,7 @@ def add_book():
 @routing_permission_check
 def system_mgr():
     form = AddPermissionForms()
+    form1 = UploadPermissionForms()
     dic1 = {'active1':'active','active2':'','active3':'','active4':'',\
         'active5':'','current_page_number':1,'style':'','title':'','message':''}
     #获取所有的用户组给页面的select 作为选项
@@ -1168,7 +1172,7 @@ def system_mgr():
         for dict_data in permission_info_list:
             style_value = random.choice(style_list)
             dict_data['style'] = style_value
-    return render_template('system.html',form = form,dic1 = dic1,list1 = permission_info_list,list2 = list2)
+    return render_template('system.html',form = form,form1 = form1, dic1 = dic1,list1 = permission_info_list,list2 = list2)
 
 #管理界面系统管理页面翻页
 @app.route('/management/system/page',methods = ['POST','GET'])
@@ -1182,6 +1186,7 @@ def system_page():
         return abort(404)
     else:
         form = AddPermissionForms()
+        form1 = UploadPermissionForms()
         #获取所有的用户组给页面的select 作为选项
         list2 = []
         res = UserGroup.query.all()
@@ -1211,7 +1216,7 @@ def system_page():
                 del j['_sa_instance_state']
                 #为表格加随机样式
                 j['style'] = random.choice(style_list)
-        return render_template('system.html',list1= permission_list,dic1 = dic1,form = form,list2 = list2)
+        return render_template('system.html',list1= permission_list,dic1 = dic1,form = form,form1 = form1,list2 = list2)
 
 #管理界面系统管理页面添加permission
 @app.route('/management/system/permission/add',methods = ['POST','GET'])
@@ -1219,6 +1224,7 @@ def system_page():
 @routing_permission_check
 def add_permission():
     form = AddPermissionForms()
+    form1 = UploadPermissionForms()
     if request.method == 'POST':
         if form.validate_on_submit():
             name = request.form['group_name']
@@ -1275,7 +1281,7 @@ def add_permission():
             for dict_data in permission_info_list:
                 style_value = random.choice(style_list)
                 dict_data['style'] = style_value
-        return render_template('system.html',form = form,dic1 = dic1,list1 = permission_info_list,list2 = list2)
+        return render_template('system.html',form = form,form1 = form1,dic1 = dic1,list1 = permission_info_list,list2 = list2)
     elif request.method == 'GET':
         return abort(404)
 
@@ -1285,6 +1291,7 @@ def add_permission():
 @routing_permission_check
 def update_permission():
     form = AddPermissionForms()
+    form1 = UploadPermissionForms()
     if request.method == 'POST':
         id = request.form['id']
         name = request.form['group_name']
@@ -1351,7 +1358,7 @@ def update_permission():
                 del j['_sa_instance_state']
                 #为表格加随机样式
                 j['style'] = random.choice(style_list)
-        return render_template('system.html',form = form,list1 = permission_list,dic1 = dic1,list2 = list2)
+        return render_template('system.html',form = form,form1 = form1,list1 = permission_list,dic1 = dic1,list2 = list2)
     elif request.method == 'GET':
         return abort(404)
 
@@ -1376,6 +1383,131 @@ def delete_permission():
                 return abort(404)
     else:
         return abort(404)
+
+#管理界面系统管理页面批量导入permission
+@app.route("/management/system/permission/upload",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def upload_permissions():
+    form = AddPermissionForms()
+    form1 = UploadPermissionForms()
+    if request.method == 'POST':
+        if form1.validate_on_submit():
+            #通过表单验证
+            upload_file = request.files['file1']
+            if upload_file:
+                file_name = str(time.time()) + upload_file.filename
+                file_path = os.getcwd() + os.path.join(os.sep,'media',file_name).replace(file_name,'')
+                upload_file.save(file_path + secure_filename(file_name))
+                #打开文件
+                if '.xlsx'  in file_name or '.xls' in file_name :
+                    table_head = ['groupname','url','description']
+                    work_book = xlrd.open_workbook(file_path + file_name)
+                    ws = work_book.sheet_by_name('Sheet1')
+                    msg_list = []
+                    if ws.row_values(0) == table_head:
+                        for row in range(1,ws.nrows):
+                            name = ws.cell_value(row,0)
+                            url = ws.cell_value(row,1)
+                            description = ws.cell_value(row,2)
+                            try:
+                                db.session.add(Permission(id= None,name = str(name),url = str(url),description = str(description)))
+                                db.session.commit()
+                                message = 'Add Permission : '+ str(name) + ' ' + str(url) + ' '+ str(description) +' Success!'
+                                msg_list.append(message)
+                            except:
+                                db.session.rollback()
+                                message = 'Add Permission : '+ str(name) + ' ' + str(url) + ' '+ str(description) +' Failed!'
+                                msg_list.append(message)
+                            else:
+                                db.session.close()
+                        msgs = ''
+                        for msg_info in msg_list:
+                            msgs +=msg_info
+                        if msgs == '':
+                            message = 'EXCEL no data!'
+                            style = 'alert alert-dismissable alert-danger'
+                            title = 'Warning!  '
+                        else:
+                            message = msgs
+                            style = 'alert alert-success alert-dismissable'
+                            title = 'SUCCESS! '
+                    else:
+                        message = 'File data error!'
+                        style = 'alert alert-dismissable alert-danger'
+                        title = 'Warning! '
+                else:
+                    message = 'File type error!'
+                    style = 'alert alert-dismissable alert-danger'
+                    title = 'Warning! '
+            else:
+                message = 'No File !'
+                style = 'alert alert-dismissable alert-danger'
+                title = 'Warning! '
+        else:
+            message = ''
+            err_data = form1.errors
+            if err_data:
+                for key,value in err_data.items():
+                    message += str(value[0])
+            style = 'alert alert-dismissable alert-danger'
+            title = 'Warning! '
+        #渲染页面，返回对应的提示信息
+        dic1 = {'active1':'active','active2':'','active3':'','active4':'',\
+            'active5':'','current_page_number':1,'style':'','title':'','message':''}
+        #将对应的提示信息加入到dic1
+        dic1['message'] = message
+        dic1['style'] = style
+        dic1['title'] = title
+        #获取所有的用户组给页面的select 作为选项
+        list2 = []
+        res = UserGroup.query.all()
+        for value in res:
+            list2.append(str(value.name))
+        # print(list2)
+        #查询permission表中的所有数据
+        permission_info = Permission.query.limit(10).all()
+        if len(permission_info) ==0:
+            permission_info_list=[]
+        else:
+            permission_info_list = []
+            for i in permission_info:
+                permission_info_list .append(i.__dict__)
+                # print(i.__dict__)
+            for j in permission_info_list:
+                del j['_sa_instance_state']
+            style_list = ['success','info','warning','error']
+            for dict_data in permission_info_list:
+                style_value = random.choice(style_list)
+                dict_data['style'] = style_value
+        return render_template('system.html',form = form,form1 = form1,\
+             dic1 = dic1,list1 = permission_info_list,list2 = list2)  
+    elif request.method == 'GET':
+        return abort(404)
+
+#批量导入permission下载excel模板
+@app.route("/management/system/permission/upload/download",methods = ['POST','GET'])
+@login_required
+@routing_permission_check
+def download_upload_permission_template():
+    file_name = 'UploadPermission.zip'
+    file_path = os.getcwd() + os.path.join(os.sep,'media',file_name )
+    if os.path.isfile(file_path) == True:
+        #打开指定文件准备传输
+        #循环读取文件
+        def sendfile(file_path):
+            with open(file_path, 'rb') as targetfile:
+                while True:
+                    data = targetfile.read(20*1024*1024)
+                    if not data:
+                        break
+                    yield data
+        response = Response(sendfile(file_path), content_type='application/octet-stream')
+        response.headers["Content-disposition"] = 'attachment; filename=%s' % file_name 
+        return response
+    else:  
+        return jsonify({'code':404,'message':'Unable to find resources'})
+
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0',port=5000,debug = True)
