@@ -728,7 +728,6 @@ def add_users():
                     #为表格加随机样式
                     j['style'] = random.choice(style_list)
             return render_template('user.html',form = form,user_list = user_list,dic1 = dic1)
-
         else:
             #未通过表单校验！
             dic1 = {'active1':'active','active2':'','active3':'','active4':'','active5':'',
@@ -1507,7 +1506,6 @@ def download_upload_permission_template():
         return response
     else:  
         return jsonify({'code':404,'message':'Unable to find resources'})
-
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0',port=5000,debug = True)
